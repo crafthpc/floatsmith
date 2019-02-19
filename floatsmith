@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+# FloatSmith top-level driver script
+#
+
+# disable this if you want or need to hard-code the root of this repository
+# using a preset environment variable
+export FLOATSMITH_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# set tools path
+export FLOATSMITH_TOOLS="${FLOATSMITH_ROOT}/tools"
+
+# make sure CRAFT is installed and accessible
+if ! which craft &>/dev/null; then
+    if [ ! -e "${FLOATSMITH_TOOLS}/craft_env.sh" ]; then
+        ${FLOATSMITH_TOOLS}/install_craft.sh
+    fi
+    source ${FLOATSMITH_TOOLS}/craft_env.sh
+fi
+
+# make sure ADAPT is installed and accessible
+if [[ -z "${ADAPT_ROOT}" ]]; then
+    if [ ! -e "${FLOATSMITH_TOOLS}/adapt_env.sh" ]; then
+        ${FLOATSMITH_TOOLS}/install_adapt.sh
+    fi
+    source ${FLOATSMITH_TOOLS}/adapt_env.sh
+fi
+
+# make sure TypeForge is installed and accessible
+if ! which typeforge &>/dev/null; then
+    if [ ! -e "${FLOATSMITH_TOOLS}/typeforge_env.sh" ]; then
+        ${FLOATSMITH_TOOLS}/install_typeforge.sh
+    fi
+    source ${FLOATSMITH_TOOLS}/typeforge_env.sh
+fi
+
+# run interactive mode
+${FLOATSMITH_ROOT}/scripts/wizard.rb
+

@@ -1,0 +1,7 @@
+*_env.sh
+gcc-*
+boost_*
+rose
+craft
+CoDiPack
+adapt-fp
