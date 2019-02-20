@@ -10,6 +10,8 @@ export FLOATSMITH_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # set tools path
 export FLOATSMITH_TOOLS="${FLOATSMITH_ROOT}/tools"
 
+echo "==  FloatSmith  =="
+
 # make sure CRAFT is installed and accessible
 if ! which craft &>/dev/null; then
     if [ ! -e "${FLOATSMITH_TOOLS}/craft_env.sh" ]; then
@@ -17,6 +19,7 @@ if ! which craft &>/dev/null; then
     fi
     source ${FLOATSMITH_TOOLS}/craft_env.sh
 fi
+echo "Using CRAFT executable: $(which craft)"
 
 # make sure ADAPT is installed and accessible
 if [[ -z "${ADAPT_ROOT}" ]]; then
@@ -25,6 +28,8 @@ if [[ -z "${ADAPT_ROOT}" ]]; then
     fi
     source ${FLOATSMITH_TOOLS}/adapt_env.sh
 fi
+echo "Using CoDiPack located at: ${CODIPACK_ROOT}"
+echo "Using ADAPT located at: ${ADAPT_ROOT}"
 
 # make sure TypeForge is installed and accessible
 if ! which typeforge &>/dev/null; then
@@ -33,6 +38,7 @@ if ! which typeforge &>/dev/null; then
     fi
     source ${FLOATSMITH_TOOLS}/typeforge_env.sh
 fi
+echo "Using TypeForge executable: $(which typeforge)"
 
 # run interactive mode
 ${FLOATSMITH_ROOT}/scripts/wizard.rb

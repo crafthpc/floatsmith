@@ -101,8 +101,6 @@ end # }}}
 def run_wizard
 
     puts ""
-    puts "== FloatSmith Wizard =="
-    puts ""
     puts "Welcome to the FloatSmith source tuning wizard."
     puts ""
 
