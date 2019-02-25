@@ -222,8 +222,9 @@ def run_wizard
         puts "  a) Exact match with original"
         puts "  b) Contains a line matching a regex"
         puts "  c) Contains no lines matching a regex"
-        puts "  d) Custom script"
-        opt = input_option("Choose an option above: ", "abcd")
+        puts "  d) Ensure all floats in output are within an Epsilon"
+        puts "  e) Custom script"
+        opt = input_option("Choose an option above: ", "abcde")
         script = []
         case opt
         when "a"
@@ -258,6 +259,18 @@ def run_wizard
             script << "    echo \"status:  fail\""
             script << "fi"
         when "d"
+            FileUtils.rm_rf $WIZARD_BASE
+            Dir.mkdir $WIZARD_BASE
+            Dir.chdir $WIZARD_BASE
+            exec_cmd($WIZARD_ACQUIRE, false)
+            exec_cmd($WIZARD_BUILD, false)
+            exec_cmd($WIZARD_RUN, false)
+            puts "Enter Epsilon: "
+            epsilon = gets.chomp
+            puts "Enter \"r\" for relative error or \"a\" for absolute error:"
+            error_type = gets.chomp
+            script << "#{__dir__}/find_floats.rb -q -#{error_type} #{$WIZARD_BASE}/stdout stdout #{epsilon}"
+        when "e"
             puts "Enter Bash code to verify your program output: (empty line to finish)"
             script = []
             line = gets.chomp

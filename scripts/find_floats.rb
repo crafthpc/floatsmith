@@ -7,16 +7,25 @@ require 'optparse'
 
 verbose = false;
 relative = false;
+quiet = false;
 
 parser = OptionParser.new do|opts|
-  opts.banner = "Usage: find_floats.rb -[vrh] <original> <compare> <threshold>"
+  opts.banner = "Usage: find_floats.rb -[vraqh] <original> <compare> <threshold>"
 
   opts.on("-v", "--verbose", "Run verbosely") do 
     verbose = true
   end
 
-  opts.on("-r", "--relative", "Run with relative error instead of absolute") do 
+  opts.on("-r", "--relative", "Run with relative error") do 
     relative = true
+  end
+
+  opts.on("-a", "--absolute", "Run with absolute error (Default)") do 
+    relative = false
+  end
+
+  opts.on("-q", "--quiet", "Run in quiet mode, only output \"pass\" or \"fail\"") do 
+    quiet = true
   end
 
   opts.on('-h', '--help', 'Displays Help') do
@@ -29,7 +38,7 @@ end
 parser.parse!
 
 if ARGV.length != 3
-  puts  "Usage: find_floats.rb -[vrh] <original> <compare> <threshold>"
+  puts  "Usage: find_floats.rb -[vraqh] <original> <compare> <threshold>"
   exit
 end
 
@@ -72,14 +81,14 @@ orig.each do |num|
     passed = false
   end
 
-  if verbose || error >= threshold
+  if (verbose || error >= threshold) && !quiet
     printf("orig: %.7E\tnew: %.7E\terror: %.7E\n", num, comp[i], error)
   end
   i += 1 
 end
 
 if passed
-  puts "PASS"
+  puts "status:  pass"
 elsif
-  puts "FAIL"
+  puts "status:  fail"
 end
