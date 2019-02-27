@@ -12,8 +12,8 @@ cd ${PREFIX}
 git clone https://github.com/LLNL/adapt-fp
 
 cat > adapt_env.sh << EOF
-export CODIPACK_ROOT=${PREFIX}/CoDiPack
-export ADAPT_ROOT=${PREFIX}/adapt-fp
+export CODIPACK_HOME=${PREFIX}/CoDiPack
+export ADAPT_HOME=${PREFIX}/adapt-fp
 EOF
 
 

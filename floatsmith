@@ -5,10 +5,10 @@
 
 # disable this if you want or need to hard-code the root of this repository
 # using a preset environment variable
-export FLOATSMITH_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export FLOATSMITH_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # set tools path
-export FLOATSMITH_TOOLS="${FLOATSMITH_ROOT}/tools"
+export FLOATSMITH_TOOLS="${FLOATSMITH_HOME}/tools"
 
 echo "==  FloatSmith  =="
 
@@ -22,14 +22,14 @@ fi
 echo "Using CRAFT executable: $(which craft)"
 
 # make sure ADAPT is installed and accessible
-if [[ -z "${ADAPT_ROOT}" ]]; then
+if [[ -z "${ADAPT_HOME}" ]]; then
     if [ ! -e "${FLOATSMITH_TOOLS}/adapt_env.sh" ]; then
         ${FLOATSMITH_TOOLS}/install_adapt.sh
     fi
     source ${FLOATSMITH_TOOLS}/adapt_env.sh
 fi
-echo "Using CoDiPack located at: ${CODIPACK_ROOT}"
-echo "Using ADAPT located at: ${ADAPT_ROOT}"
+echo "Using CoDiPack located at: ${CODIPACK_HOME}"
+echo "Using ADAPT located at: ${ADAPT_HOME}"
 
 # make sure TypeForge is installed and accessible
 if ! which typeforge &>/dev/null; then
@@ -41,5 +41,5 @@ fi
 echo "Using TypeForge executable: $(which typeforge)"
 
 # run interactive mode
-${FLOATSMITH_ROOT}/scripts/wizard.rb
+${FLOATSMITH_HOME}/scripts/wizard.rb
 
