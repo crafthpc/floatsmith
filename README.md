@@ -25,8 +25,8 @@ your existing installation as follows:
 1) For CRAFT, make sure that the main `craft` search driver script is accessible
 in your `PATH`.
 
-2) For ADAPT, make sure the environment variables `CODIPACK_ROOT` and
-`ADAPT_ROOT` environment variables are set to the root of the CoDiPack and ADAPT
+2) For ADAPT, make sure the environment variables `CODIPACK_HOME` and
+`ADAPT_HOME` environment variables are set to the root of the CoDiPack and ADAPT
 repositories, respectively (ADAPT depends on
 [CoDiPack](https://github.com/SciCompKL/CoDiPack)).
 
