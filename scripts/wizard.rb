@@ -417,9 +417,9 @@ def run_wizard
             end
             exec_cmd $WIZARD_ACQUIRE
             File.open("#{$WIZARD_ADRUN}/run.sh", "w") do |f|
-                f.puts "export CXX='typeforge --plugin instrument.json --compile" +
-                       " -std=c++11 -I${CODIPACK_HOME}/include -I${$ADAPT_HOME}" +
-                       " -DCODI_EnableImplicitConversion -DCODI_DisableImplicitConversionWarning'"
+                f.puts "export CXX=\"typeforge --plugin instrument.json --compile" +
+                       " -std=c++11 -I${CODIPACK_HOME}/include -I${ADAPT_HOME}" +
+                       " -DCODI_EnableImplicitConversion -DCODI_DisableImplicitConversionWarning\""
                 f.puts "#{$WIZARD_BUILD}"
                 f.puts "#{$WIZARD_RUN}"
                 f.puts "cp craft_recommend.json #{$WIZARD_ADOUT}"
