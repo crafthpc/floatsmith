@@ -105,4 +105,6 @@ The following contributors have been involved in some part of this project:
   ADAPT, author of JSON interchange format, and author of TypeForge installation
   script
 * Nathan Pinnow - contributor to TypeForge
+* [Tristan Vanderbruggen](https://github.com/tristanvdb) - contributor to
+  TypeForge
 
