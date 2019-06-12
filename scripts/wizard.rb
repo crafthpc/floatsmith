@@ -113,7 +113,7 @@ def run_wizard
     $WIZARD_TFVARS  = "#{$WIZARD_ROOT}/typeforge_vars.json"
     $WIZARD_INITCFG = "#{$WIZARD_ROOT}/craft_initial.json"
     $WIZARD_ADRUN   = "#{$WIZARD_ROOT}/autodiff"
-    $WIZARD_ADOUT   = "#{$WIZARD_ROOT}/craft_recommend.json"
+    $WIZARD_ADOUT   = "#{$WIZARD_ROOT}/adapt_recommend.json"
     $WIZARD_SEARCH  = "#{$WIZARD_ROOT}/search"
     $WIZARD_ACQUIRE = "#{$WIZARD_ROOT}/wizard_acquire"
     $WIZARD_BUILD   = "#{$WIZARD_ROOT}/wizard_build"
@@ -422,7 +422,7 @@ def run_wizard
                        " -DCODI_EnableImplicitConversion -DCODI_DisableImplicitConversionWarning\""
                 f.puts "#{$WIZARD_BUILD}"
                 f.puts "#{$WIZARD_RUN}"
-                f.puts "cp craft_recommend.json #{$WIZARD_ADOUT}"
+                f.puts "cp adapt_recommend.json #{$WIZARD_ADOUT}"
             end
             File.chmod(0700, "#{$WIZARD_ADRUN}/run.sh")
             exec_cmd "#{$WIZARD_ADRUN}/run.sh"
@@ -464,9 +464,9 @@ def run_wizard
             # TODO: handle 'error' output
         end
         File.chmod(0700, "#{$WIZARD_SEARCH}/craft_driver")
-        cmd = "craft search -V -c ../craft_initial.json"
+        cmd = "craft search -V -c #{$WIZARD_INITCFG}"
         if File.exist?($WIZARD_ADOUT) then
-            cmd += " -A ../craft_recommend.json"
+            cmd += " -A #{$WIZARD_ADOUT}"
         end
         puts "CRAFT supports several search strategies:"
         puts "  a) Combinational - try all combinations (very expensive!)"
