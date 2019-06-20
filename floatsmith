@@ -11,34 +11,56 @@ export FLOATSMITH_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export FLOATSMITH_TOOLS="${FLOATSMITH_HOME}/tools"
 
 echo "==  FloatSmith  =="
+echo ""
+
+# make sure Ruby is installed
+if [ -z "$(command -v ruby)" ]; then
+    echo "FloatSmith and CRAFT require Ruby, which generally needs to be installed by a sysadmin."
+    echo "Please contact your admin and ask for access to Ruby 2.0 or newer."
+    exit
+fi
+
+echo "System info: $(uname -a)"
+echo "Using Ruby $(ruby -v | sed -e 's/ruby //')"
+h=$(cd ${FLOATSMITH_HOME} > /dev/null ; git log -1 --pretty=format:"%h")
+echo "FloatSmith located at: ${FLOATSMITH_HOME} (last commit $h)"
 
 # make sure CRAFT is installed and accessible
-if ! which craft &>/dev/null; then
-    if [ ! -e "${FLOATSMITH_TOOLS}/craft_env.sh" ]; then
+if [ -z "$(command -v craft)" ]; then
+    if [ -e "${FLOATSMITH_TOOLS}/craft_env.sh" ]; then
+        source ${FLOATSMITH_TOOLS}/craft_env.sh
+    else
         ${FLOATSMITH_TOOLS}/install_craft.sh
     fi
-    source ${FLOATSMITH_TOOLS}/craft_env.sh
 fi
-echo "Using CRAFT executable: $(which craft)"
+v=$(craft | grep "CRAFT" | sed -e 's/CRAFT //')
+h=$(cd $(dirname $(which craft)) > /dev/null ; git log -1 --pretty=format:"%h")
+echo "Using CRAFT executable: $(which craft) (version $v, last commit $h)"
 
 # make sure ADAPT is installed and accessible
-if [[ -z "${ADAPT_HOME}" ]]; then
-    if [ ! -e "${FLOATSMITH_TOOLS}/adapt_env.sh" ]; then
+if [ -z "${ADAPT_HOME}" ]; then
+    if [ -e "${FLOATSMITH_TOOLS}/adapt_env.sh" ]; then
+        source ${FLOATSMITH_TOOLS}/adapt_env.sh
+    else
         ${FLOATSMITH_TOOLS}/install_adapt.sh
     fi
-    source ${FLOATSMITH_TOOLS}/adapt_env.sh
 fi
-echo "Using CoDiPack located at: ${CODIPACK_HOME}"
-echo "Using ADAPT located at: ${ADAPT_HOME}"
+h=$(cd $CODIPACK_HOME > /dev/null ; git log -1 --pretty=format:"%h")
+echo "Using CoDiPack located at: ${CODIPACK_HOME} (last commit $h)"
+h=$(cd $ADAPT_HOME > /dev/null ; git log -1 --pretty=format:"%h")
+echo "Using ADAPT located at: ${ADAPT_HOME} (last commit $h)"
 
 # make sure TypeForge is installed and accessible
-if ! which typeforge &>/dev/null; then
-    if [ ! -e "${FLOATSMITH_TOOLS}/typeforge_env.sh" ]; then
+if [ -z "$(command -v typeforge)" ]; then
+    if [ -e "${FLOATSMITH_TOOLS}/typeforge_env.sh" ]; then
+        source ${FLOATSMITH_TOOLS}/typeforge_env.sh
+    else
         ${FLOATSMITH_TOOLS}/install_typeforge.sh
     fi
-    source ${FLOATSMITH_TOOLS}/typeforge_env.sh
 fi
-echo "Using TypeForge executable: $(which typeforge)"
+v=$(typeforge --version | cut -d ' ' -f 3)
+h=$(cd $(dirname $(which typeforge)) > /dev/null ; git log -1 --pretty=format:"%h")
+echo "Using TypeForge executable: $(which typeforge) (version $v, last commit $h)"
 
 # run interactive mode
 ${FLOATSMITH_HOME}/scripts/wizard.rb
