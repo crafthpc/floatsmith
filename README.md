@@ -59,14 +59,19 @@ configurations.
 The driver will ask you various questions about your program and generate
 several other helper scripts that manage running the various parts of the
 pipeline. By default these scripts and all intermediate/final results are placed
-in a folder called `.craft` in the current folder, but this can be changed if
-desired by providing a different path when the script asks for it.
+in a folder called `.floatsmith` in the current folder, but this can be changed
+if desired by providing a different path when the script asks for it.
 
 After running TypeForge (and optionally ADAPT), the CRAFT search will commence,
 printing various status information while it is running. When it is finished,
-you will find your final recommended configuration in the `.craft/final`
-subfolder. You may examine `.craft/search/craft_final.json` for a list of
+you will find your final recommended configuration in the `.floatsmith/final`
+subfolder. You may examine `.floatsmith/search/craft_final.json` for a list of
 converted variables.
+
+If you would prefer a more non-interactive experience, you can invoke FloatSmith
+in batch mode using the `-B` option. This will accept all default options unless
+otherwise specified on the command line. Run with `-h` for a complete list of
+options available to customize the run without using the interactive prompts.
 
 
 ## Getting Involved

@@ -18,28 +18,47 @@ require 'json'
 # read a boolean (yes/no) from standard input
 def input_boolean(prompt, default)
     if not default.nil? then
+        return default if $WIZARD_BATCHMODE
         prompt += " [default='#{default ? "y" : "n"}'] "
     end
     print prompt
-    r = gets.chomp.downcase
+    r = STDIN.gets.chomp.downcase
     r = (default ? "y" : "n") if r == "" and not default.nil?
     while not "yn".chars.include?(r)
         puts "Invalid response: #{r}"
         print prompt
-        r = gets.chomp.downcase
+        r = STDIN.gets.chomp.downcase
         r = (default ? "y" : "n") if r == "" and not default.nil?
     end
     return r == 'y'
 end
 
-# read a single-letter option from standard input
-def input_option(prompt, valid_opts)
+# read an integer from standard input
+def input_integer(prompt, default)
+    if not default.nil? then
+        return default if $WIZARD_BATCHMODE
+        prompt += " [default='#{default}'] "
+    end
     print prompt
-    opt = gets.chomp.downcase
+    num = STDIN.gets.chomp
+    num = default if num == "" and not default.nil?
+    num = num.to_i
+    return num
+end
+
+# read a single-letter option from standard input
+def input_option(prompt, valid_opts, default)
+    if not default.nil? then
+        return default if $WIZARD_BATCHMODE
+        prompt += " [default='#{default}'] "
+    end
+    print prompt
+    opt = STDIN.gets.chomp.downcase
+    opt = default if opt == "" and not default.nil?
     while not valid_opts.chars.include?(opt)
         puts "Invalid option '#{opt}'"
         print prompt
-        opt = gets.chomp.downcase
+        opt = STDIN.gets.chomp.downcase
     end
     return opt
 end
@@ -47,10 +66,11 @@ end
 # read a path from standard input (optionally check for existence)
 def input_path(prompt, default, must_exist=true)
     if not default.nil? then
+        return default if $WIZARD_BATCHMODE
         prompt += " [default='#{default}'] "
     end
     print prompt
-    path = gets.chomp
+    path = STDIN.gets.chomp
     ok = false
     while not ok
         ok = true
@@ -68,7 +88,7 @@ def input_path(prompt, default, must_exist=true)
         end
         if not ok then
             print prompt
-            path = gets.chomp
+            path = STDIN.gets.chomp
         end
     end
     return path
@@ -97,16 +117,35 @@ def save_cmd(cmd, stdout_fn)
     end
 end # }}}
 
-# {{{ run_wizard - main driver routine
-def run_wizard
+# {{{ run_driver - main driver routine
+def run_driver
+    puts ""
+    puts ARGV.inspect
 
-    puts ""
-    puts "Welcome to the FloatSmith source tuning wizard."
-    puts ""
+    if ARGV.include?("-h") then
+        puts "FloatSmith batch mode ('-B') uses all default options unless overridden"
+        puts "using any of the following options:"
+        puts ""
+        puts "  --run \"cmd\"                   use \"cmd\" to run the program"
+        puts "  --ignore \"var1 var2 etc\"      ignore all variables with the provided names"
+        puts "  --adapt                         run the ADAPT phase (off by default)"
+        puts ""
+        exit
+    end
+
+    $WIZARD_BATCHMODE = ARGV.include?("-B")
+
+    if not $WIZARD_BATCHMODE then
+        puts "Welcome to the FloatSmith source tuning framework."
+        puts ""
+        puts "If you wish to run FloatSmith non-interactively, run with the '-B' (batch mode) option."
+        puts "Run with '-h' for other options in that mode."
+        puts ""
+    end
 
     # initialize paths
     $WIZARD_ROOT    = File.absolute_path(input_path("Where do you want to " +
-                      "save configuration and search files?", "./.craft", false))
+                      "save configuration and search files?", "./.floatsmith", false))
     $WIZARD_SANITY  = "#{$WIZARD_ROOT}/sanity"
     $WIZARD_BASE    = "#{$WIZARD_ROOT}/baseline"
     $WIZARD_INITIAL = "#{$WIZARD_ROOT}/initial"
@@ -115,10 +154,10 @@ def run_wizard
     $WIZARD_ADRUN   = "#{$WIZARD_ROOT}/autodiff"
     $WIZARD_ADOUT   = "#{$WIZARD_ROOT}/adapt_recommend.json"
     $WIZARD_SEARCH  = "#{$WIZARD_ROOT}/search"
-    $WIZARD_ACQUIRE = "#{$WIZARD_ROOT}/wizard_acquire"
-    $WIZARD_BUILD   = "#{$WIZARD_ROOT}/wizard_build"
-    $WIZARD_RUN     = "#{$WIZARD_ROOT}/wizard_run"
-    $WIZARD_VERIFY  = "#{$WIZARD_ROOT}/wizard_verify"
+    $WIZARD_ACQUIRE = "#{$WIZARD_ROOT}/acquire.sh"
+    $WIZARD_BUILD   = "#{$WIZARD_ROOT}/build.sh"
+    $WIZARD_RUN     = "#{$WIZARD_ROOT}/run.sh"
+    $WIZARD_VERIFY  = "#{$WIZARD_ROOT}/verify.sh"
 
     # make sure configuration folder exists
     if not File.exist?($WIZARD_ROOT) then
@@ -134,24 +173,24 @@ def run_wizard
         puts ""
         puts "To search in parallel automatically, the system must be able to:"
         puts "  1) acquire a copy of your code,"
-        puts "  2) build your code using generic CC/CXX variables,"
+        puts "  2) build your code using the generic CXX variable,"
         puts "  3) run your program using representative inputs, and"
         puts "  4) verify that the output is acceptable."
         puts ""
         puts "How would you like to acquire a copy of your code?"
         puts "  a) Recursive copy from a local folder"
         puts "  b) Clone a git repository"
-        opt = input_option("Choose an option above: ", "ab")
+        opt = input_option("Choose an option above: ", "ab", "a")
         case opt
         when "a"
             path = input_path("Enter project root path: ", ".", true)
             cmd = "cp -rL #{File.absolute_path(path)}/* ."
         when "b"
             print "Enter repository URL: "
-            cmd = "git clone #{gets.chomp}"
+            cmd = "git clone #{STDIN.gets.chomp}"
         end
         File.open($WIZARD_ACQUIRE, 'w') do |f|
-            f.puts "#/usr/bin/bash"
+            f.puts "#/usr/bin/env bash"
             f.puts cmd
         end
         File.chmod(0700, $WIZARD_ACQUIRE)
@@ -161,12 +200,12 @@ def run_wizard
 
     # generate build script
     if not File.exist?($WIZARD_BUILD) then
-        puts "How is your project built?"
+        puts "How is your project built? (your build system must use CXX)"
         puts "  a) \"make\""
         puts "  b) \"./configure && make\""
         puts "  c) \"cmake .\""
         puts "  d) Custom script"
-        opt = input_option("Choose an option above: ", "abcd")
+        opt = input_option("Choose an option above: ", "abcd", "a")
         script = []
         case opt
         when "a"
@@ -179,14 +218,14 @@ def run_wizard
             puts "Enter Bash code to build your program."
             puts "Print \"status:  error\" if the build fails."
             puts "Enter an empty line to finish."
-            line = gets.chomp
+            line = STDIN.gets.chomp
             while line != ""
                 script << line
-                line = gets.chomp
+                line = STDIN.gets.chomp
             end
         end
         File.open($WIZARD_BUILD, 'w') do |f|
-            f.puts "#/usr/bin/bash"
+            f.puts "#/usr/bin/env bash"
             script.each { |line| f.puts line }
         end
         File.chmod(0700, $WIZARD_BUILD)
@@ -196,20 +235,23 @@ def run_wizard
 
     # generate run script
     if not File.exist?($WIZARD_RUN) then
-        puts "Enter command(s) to run your program with representative input."
-        puts "If you need to save the output for verification purposes, please"
-        puts "write it to \"stdout\" in the current folder. Enter an empty line"
-        puts "to finish."
-        puts ""
-        script = []
-        line = gets.chomp
-        while line != ""
-            script << line
-            line = gets.chomp
+        if ARGV.include?("--run") then
+            script = [ ARGV[ARGV.find_index("--run")+1] ]
+        else
+            puts "Enter command(s) to run your program with representative input."
+            puts "Enter an empty line to finish."
+            puts ""
+            script = []
+            line = STDIN.gets.chomp
+            while line != ""
+                script << line
+                line = STDIN.gets.chomp
+            end
         end
         File.open($WIZARD_RUN, 'w') do |f|
-            f.puts "#/usr/bin/bash"
-            script.each { |line| f.puts line }
+            f.puts "#/usr/bin/env bash"
+            f.puts "rm -f stdout"
+            script.each { |line| f.puts line+" >>stdout" }
         end
         File.chmod(0700, $WIZARD_RUN)
         puts "Run script created: #{$WIZARD_RUN}"
@@ -219,12 +261,12 @@ def run_wizard
     # generate verification script
     if not File.exist?($WIZARD_VERIFY) then
         puts "How should the output be verified?"
-        puts "  a) Exact match with original"
-        puts "  b) Contains a line matching a regex"
-        puts "  c) Contains no lines matching a regex"
-        puts "  d) Ensure all floats in output are within an Epsilon"
+        puts "  a) Exact match with original (stdout)"
+        puts "  b) Contains a line matching a regex (stdout)"
+        puts "  c) Contains no lines matching a regex (stdout)"
+        puts "  d) Ensure all floats in output are within an Epsilon (stdout)"
         puts "  e) Custom script"
-        opt = input_option("Choose an option above: ", "abcde")
+        opt = input_option("Choose an option above: ", "abcde", "a")
         script = []
         case opt
         when "a"
@@ -242,7 +284,7 @@ def run_wizard
             script << "fi"
         when "b"
             puts "Enter regex: "
-            regex = gets.chomp
+            regex = STDIN.gets.chomp
             script << "search=$(grep -E '#{regex}' stdout)"
             script << "if [[ -z \"$search\" ]]; then"
             script << "    echo \"status:  fail\""
@@ -251,7 +293,7 @@ def run_wizard
             script << "fi"
         when "c"
             puts "Enter regex: "
-            regex = gets.chomp
+            regex = STDIN.gets.chomp
             script << "search=$(grep -E '#{regex}' stdout)"
             script << "if [[ -z \"$search\" ]]; then"
             script << "    echo \"status:  pass\""
@@ -266,21 +308,22 @@ def run_wizard
             exec_cmd($WIZARD_BUILD, false)
             exec_cmd($WIZARD_RUN, false)
             puts "Enter Epsilon: "
-            epsilon = gets.chomp
+            epsilon = STDIN.gets.chomp
             puts "Enter \"r\" for relative error or \"a\" for absolute error:"
-            error_type = gets.chomp
+            error_type = STDIN.gets.chomp
             script << "#{__dir__}/find_floats.rb -q -#{error_type} #{$WIZARD_BASE}/stdout stdout #{epsilon}"
         when "e"
-            puts "Enter Bash code to verify your program output: (empty line to finish)"
+            puts "Enter Bash code to verify your program output:"
+            puts "(standard output will be in a file called stdout; empty line to finish)"
             script = []
-            line = gets.chomp
+            line = STDIN.gets.chomp
             while line != ""
                 script << line
-                line = gets.chomp
+                line = STDIN.gets.chomp
             end
         end
         File.open($WIZARD_VERIFY, 'w') do |f|
-            f.puts "#/usr/bin/bash"
+            f.puts "#/usr/bin/env bash"
             script.each { |line| f.puts line }
         end
         File.chmod(0700, $WIZARD_VERIFY)
@@ -289,7 +332,8 @@ def run_wizard
     end
 
     # run sanity check
-    if input_boolean("Do you want to run a sanity check to test the generated scripts?", true) then
+    if not File.exist?("#{$WIZARD_SANITY}/.FS_DONE") then
+        puts "Running sanity check on generated scripts."
         FileUtils.rm_rf $WIZARD_SANITY
         Dir.mkdir $WIZARD_SANITY
         Dir.chdir $WIZARD_SANITY
@@ -297,6 +341,7 @@ def run_wizard
         exec_cmd $WIZARD_BUILD
         exec_cmd $WIZARD_RUN
         exec_cmd $WIZARD_VERIFY
+        exec_cmd "touch #{$WIZARD_SANITY}/.FS_DONE"
         puts ""
     end
 
@@ -343,23 +388,30 @@ def run_wizard
     if not File.exist?($WIZARD_INITCFG) then
         puts "Some variables may not be appropriate candidates for tuning (e.g., if they"
         puts "are used for calculating error). You may wish to remove them from the list."
-        if input_boolean("Do you wish to review/edit the list of variables?", true) then
-            cfg = JSON.parse(IO.read($WIZARD_TFVARS))
+        cfg = JSON.parse(IO.read($WIZARD_TFVARS))
+        ids = []
+        if ARGV.include?("--ignore") then
+            names = ARGV[ARGV.find_index("--ignore")+1].split(" ")
             cfg["actions"].each_index do |i|
-                a = cfg["actions"][i]
-                puts "  #{i}) #{a["name"]} (#{a["scope"]}) [#{a["source_info"].gsub(/.*\//, "")}]"
+                ids << i if names.include?(cfg["actions"][i]["name"])
             end
-            puts "Enter ID numbers for any variables you wish to remove, separate by spaces:"
-            ids = gets.split(" ").map { |x| x.to_i }
-            new_actions = []
-            cfg["actions"].each_index do |i|
-                new_actions << cfg["actions"][i] if not ids.include?(i)
-            end
-            cfg["actions"] = new_actions
-            IO.write($WIZARD_INITCFG, JSON.pretty_generate(cfg))
         else
-            FileUtils.cp($WIZARD_TFVARS, $WIZARD_INITCFG)
+            if input_boolean("Do you wish to review/edit the list of variables?", false) then
+                cfg["actions"].each_index do |i|
+                    a = cfg["actions"][i]
+                    puts "  #{i}) #{a["name"]} (#{a["scope"]}) [#{a["source_info"].gsub(/.*\//, "")}]"
+                end
+                puts "Enter ID numbers for any variables you wish to remove, separate by spaces:"
+                ids = STDIN.gets.split(" ").map { |x| x.to_i }
+            end
         end
+        puts "Ignoring #{ids.size} variables." if ids.size > 0
+        new_actions = []
+        cfg["actions"].each_index do |i|
+            new_actions << cfg["actions"][i] if not ids.include?(i)
+        end
+        cfg["actions"] = new_actions
+        IO.write($WIZARD_INITCFG, JSON.pretty_generate(cfg))
         puts "Initial configuration created: #{$WIZARD_INITCFG}"
         puts ""
     end
@@ -371,7 +423,11 @@ def run_wizard
         puts "converge faster, but your program must be compilable using"
         puts "'-std=c++11' and you must have included all of the appropriate"
         puts "pragmas (see documentation)."
-        if input_boolean("Do you wish to run ADAPT?", false) then
+        run_adapt = ARGV.include?("--adapt")
+        if not run_adapt then
+            run_adapt = input_boolean("Do you wish to run ADAPT?", false)
+        end
+        if run_adapt then
             Dir.mkdir $WIZARD_ADRUN
             Dir.chdir $WIZARD_ADRUN
             script = []
@@ -469,20 +525,16 @@ def run_wizard
             cmd += " -A #{$WIZARD_ADOUT}"
         end
         puts "CRAFT supports several search strategies:"
-        puts "  a) Combinational - try all combinations (very expensive!)"
-        puts "  b) Compositional - try individuals then try to compose passing configurations"
-        puts "  c) Delta debugging - binary search on the list of variables"
-        opt = input_option("Which strategy do you wish to use for the search? ", "abc")
-        cmd += " -s compositional" if opt == "b"
-        cmd += " -s ddebug" if opt == "c"
-        print "How many trials of each configuration do you want to run? [default=5] "
-        ntrials = gets.chomp
-        ntrials = "5" if ntrials == ""
+        puts "  a) Compositional - try individuals then try to compose passing configurations"
+        puts "  b) Delta debugging - binary search on the list of variables"
+        puts "  c) Combinational - try all combinations (very expensive!)"
+        opt = input_option("Which strategy do you wish to use for the search? ", "abc", "a")
+        cmd += " -s compositional" if opt == "a"
+        cmd += " -s ddebug" if opt == "b"
+        ntrials = input_integer("How many trials of each configuration do you want to run?", "5")
         cmd += " -t #{ntrials}" if ntrials.to_i > 1
         cpus = exec_cmd("cat /proc/cpuinfo | grep processor | wc -l", false, false, true).chomp
-        print "How many worker threads do you want to use? [default=#{cpus}] "
-        nworkers = gets.chomp
-        nworkers = cpus if nworkers == ""
+        nworkers = input_integer("How many worker threads do you want to use?", "#{cpus}")
         cmd += " -j #{nworkers}" if nworkers.to_i > 1
         File.open("#{$WIZARD_SEARCH}/run.sh", "w") do |f|
             f.puts "#!/bin/bash"
@@ -495,5 +547,5 @@ def run_wizard
 
 end # }}}
 
-run_wizard
+run_driver
 
