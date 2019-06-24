@@ -2,6 +2,18 @@
 #
 # FloatSmith interactive driver
 #
+# This script is meant to be relatively accessible to anyone familiar with
+# systems development. It also generates a LOT of helper scripts that can be run
+# independently to re-run a particular phase or to help debug an issue. By
+# default all of the helper scripts and intermediate/result files are stored in
+# a hidden folder (".floatsmith" by default), providing separation between your
+# project files and the results of the analysis.
+#
+# There is a batch mode ('-B') that accepts all defaults when prompted and
+# allows you to customize the process with command-line parameters. It is
+# recommended that you run at least once interactively before attempting to use
+# the batch mode.
+#
 
 # needed for opening stderr as well as stdin/stdout
 # when spawning new system processes
@@ -96,8 +108,9 @@ end
 
 # }}}
 
-# {{{ exec_cmd - run a command and optionally echo or return output
+# {{{ command execution routines
 def exec_cmd(cmd, echo_stdout=true, echo_stderr=false, return_stdout=false)
+    # run a command and optionally echo or return output
     stdout = []
     Open3.popen3(cmd) do |io_in, io_out, io_err|
         io_out.each_line do |line|
@@ -107,21 +120,21 @@ def exec_cmd(cmd, echo_stdout=true, echo_stderr=false, return_stdout=false)
         io_err.each_line { |line| puts line } if echo_stderr
     end
     return stdout.join("\n")
-end # }}}
+end
 
-# {{{ save_cmd - run a command and save standard output to a file
 def save_cmd(cmd, stdout_fn)
+    # run a command and save standard output to a file
     Open3.popen3(cmd) do |io_in, io_out, io_err|
         io_out.each_line { |line| puts line } if echo_stdout
         io_err.each_line { |line| puts line } if echo_stderr
     end
 end # }}}
 
-# {{{ run_driver - main driver routine
+# run_driver - main driver routine
 def run_driver
-    puts ""
-    puts ARGV.inspect
 
+    # {{{ print help text
+    puts ""
     if ARGV.include?("-h") then
         puts "FloatSmith batch mode ('-B') uses all default options unless overridden"
         puts "using any of the following options:"
@@ -129,21 +142,36 @@ def run_driver
         puts "  --run \"cmd\"                   use \"cmd\" to run the program"
         puts "  --ignore \"var1 var2 etc\"      ignore all variables with the provided names"
         puts "  --adapt                         run the ADAPT phase (off by default)"
+        puts "  -s <name>                       run the specified CRAFT search strategy"
+        puts "      Valid strategy names:"
+        puts "        compositional             try individuals then try to compose passing configurations"
+        puts "        ddebug                    binary search on the list of variables"
+        puts "        combinational             try all combinations (very expensive!)"
+        puts " -t <number>                      run the specified number of trials per configuration during the CRAFT search [default=5]"
+        puts " -j <number>                      run the specified number of worker threads during the CRAFT search [default=num cpus]"
         puts ""
         exit
-    end
+    end # }}}
 
+    # {{{ check for batch mode and print intro text if necessary
     $WIZARD_BATCHMODE = ARGV.include?("-B")
-
     if not $WIZARD_BATCHMODE then
         puts "Welcome to the FloatSmith source tuning framework."
         puts ""
         puts "If you wish to run FloatSmith non-interactively, run with the '-B' (batch mode) option."
         puts "Run with '-h' for other options in that mode."
         puts ""
-    end
+        puts "NOTE: We highly recommend cleaning your project before running this script!"
+        puts ""
+        puts "To search in parallel automatically, the system must be able to:"
+        puts "  1) acquire a copy of your code,"
+        puts "  2) build your code using the generic CXX variable,"
+        puts "  3) run your program using representative inputs, and"
+        puts "  4) verify that the output is acceptable."
+        puts ""
+    end # }}}
 
-    # initialize paths
+    # {{{ initialize paths
     $WIZARD_ROOT    = File.absolute_path(input_path("Where do you want to " +
                       "save configuration and search files?", "./.floatsmith", false))
     $WIZARD_SANITY  = "#{$WIZARD_ROOT}/sanity"
@@ -158,6 +186,9 @@ def run_driver
     $WIZARD_BUILD   = "#{$WIZARD_ROOT}/build.sh"
     $WIZARD_RUN     = "#{$WIZARD_ROOT}/run.sh"
     $WIZARD_VERIFY  = "#{$WIZARD_ROOT}/verify.sh"
+    $WIZARD_PHASE1  = "#{$WIZARD_ROOT}/phase1.log"
+    $WIZARD_PHASE2  = "#{$WIZARD_ROOT}/phase2.log"
+    $WIZARD_PHASE3  = "#{$WIZARD_ROOT}/phase3.log"
 
     # make sure configuration folder exists
     if not File.exist?($WIZARD_ROOT) then
@@ -165,21 +196,15 @@ def run_driver
     elsif not Dir.exist?($WIZARD_ROOT) then
         puts "ERROR: #{$WIZARD_ROOT} already exists as a regular file"
         exit
-    end
+    end # }}}
 
-    # print intro text and generate acquisition script
+    # {{{ setup 1: generate acquisition script
     if not File.exist?($WIZARD_ACQUIRE) then
-        puts "NOTE: We recommend cleaning your project before running this script!"
-        puts ""
-        puts "To search in parallel automatically, the system must be able to:"
-        puts "  1) acquire a copy of your code,"
-        puts "  2) build your code using the generic CXX variable,"
-        puts "  3) run your program using representative inputs, and"
-        puts "  4) verify that the output is acceptable."
-        puts ""
-        puts "How would you like to acquire a copy of your code?"
-        puts "  a) Recursive copy from a local folder"
-        puts "  b) Clone a git repository"
+        if not $WIZARD_BATCHMODE then
+            puts "How would you like to acquire a copy of your code?"
+            puts "  a) Recursive copy from a local folder"
+            puts "  b) Clone a git repository"
+        end
         opt = input_option("Choose an option above: ", "ab", "a")
         case opt
         when "a"
@@ -187,7 +212,7 @@ def run_driver
             cmd = "cp -rL #{File.absolute_path(path)}/* ."
         when "b"
             print "Enter repository URL: "
-            cmd = "git clone #{STDIN.gets.chomp}"
+            cmd = "git clone #{STDIN.gets.chomp} ."
         end
         File.open($WIZARD_ACQUIRE, 'w') do |f|
             f.puts "#/usr/bin/env bash"
@@ -197,14 +222,16 @@ def run_driver
         puts "Acquisition script created: #{$WIZARD_ACQUIRE}"
         puts ""
     end
-
-    # generate build script
+    # }}}
+    # {{{ setup 2: generate build script
     if not File.exist?($WIZARD_BUILD) then
-        puts "How is your project built? (your build system must use CXX)"
-        puts "  a) \"make\""
-        puts "  b) \"./configure && make\""
-        puts "  c) \"cmake .\""
-        puts "  d) Custom script"
+        if not $WIZARD_BATCHMODE then
+            puts "How is your project built? (your build system must use CXX)"
+            puts "  a) \"make\""
+            puts "  b) \"./configure && make\""
+            puts "  c) \"cmake .\""
+            puts "  d) Custom script"
+        end
         opt = input_option("Choose an option above: ", "abcd", "a")
         script = []
         case opt
@@ -232,8 +259,8 @@ def run_driver
         puts "Build script created: #{$WIZARD_BUILD}"
         puts ""
     end
-
-    # generate run script
+    # }}}
+    # {{{ setup 3: generate run script
     if not File.exist?($WIZARD_RUN) then
         if ARGV.include?("--run") then
             script = [ ARGV[ARGV.find_index("--run")+1] ]
@@ -257,19 +284,22 @@ def run_driver
         puts "Run script created: #{$WIZARD_RUN}"
         puts ""
     end
-
-    # generate verification script
+    # }}}
+    # {{{ setup 4: generate verification script
     if not File.exist?($WIZARD_VERIFY) then
-        puts "How should the output be verified?"
-        puts "  a) Exact match with original (stdout)"
-        puts "  b) Contains a line matching a regex (stdout)"
-        puts "  c) Contains no lines matching a regex (stdout)"
-        puts "  d) Ensure all floats in output are within an Epsilon (stdout)"
-        puts "  e) Custom script"
+        if not $WIZARD_BATCHMODE then
+            puts "How should the output be verified?"
+            puts "  a) Exact match with original (stdout)"
+            puts "  b) Contains a line matching a regex (stdout)"
+            puts "  c) Contains no lines matching a regex (stdout)"
+            puts "  d) Ensure all floats in output are within an Epsilon (stdout)"
+            puts "  e) Custom script"
+        end
         opt = input_option("Choose an option above: ", "abcde", "a")
         script = []
         case opt
         when "a"
+            puts "Running original program to generate verification output."
             FileUtils.rm_rf $WIZARD_BASE
             Dir.mkdir $WIZARD_BASE
             Dir.chdir $WIZARD_BASE
@@ -329,9 +359,9 @@ def run_driver
         File.chmod(0700, $WIZARD_VERIFY)
         puts "Verify script created: #{$WIZARD_VERIFY}"
         puts ""
-    end
+    end # }}}
 
-    # run sanity check
+    # {{{ intermission: run sanity check
     if not File.exist?("#{$WIZARD_SANITY}/.FS_DONE") then
         puts "Running sanity check on generated scripts."
         FileUtils.rm_rf $WIZARD_SANITY
@@ -343,10 +373,12 @@ def run_driver
         exec_cmd $WIZARD_VERIFY
         exec_cmd "touch #{$WIZARD_SANITY}/.FS_DONE"
         puts ""
-    end
+    end # }}}
 
-    # phase 1a: variable discovery
+    # {{{ phase 1a: variable discovery
     if not File.exist?($WIZARD_TFVARS) then
+
+        # setup new build w/ hard-coded TypeForge plugin
         puts "Finding variables to be tuned."
         FileUtils.rm_rf($WIZARD_INITIAL)
         Dir.mkdir $WIZARD_INITIAL
@@ -364,6 +396,8 @@ def run_driver
             script.each { |line| f.puts line }
         end
         exec_cmd $WIZARD_ACQUIRE
+
+        # create phase reproducibility script and run it
         File.open("#{$WIZARD_INITIAL}/run.sh", "w") do |f|
           script << "      \"name\": \"#{$WIZARD_TFVARS}\","
             f.puts "export CC='typeforge --plugin initial.json --typeforge-out #{$WIZARD_TFVARS} --compile'"
@@ -371,7 +405,7 @@ def run_driver
             f.puts "#{$WIZARD_BUILD}"
         end
         File.chmod(0700, "#{$WIZARD_INITIAL}/run.sh")
-        exec_cmd "#{$WIZARD_INITIAL}/run.sh"
+        exec_cmd "#{$WIZARD_INITIAL}/run.sh | tee #{$WIZARD_PHASE1}"
         puts "Variables discovered: #{$WIZARD_TFVARS}"
         puts ""
     end
@@ -383,11 +417,13 @@ def run_driver
         puts "Aborting search."
         exit
     end
-
-    # phase 1b: variable review (optional)
+    # }}}
+    # {{{ phase 1b: variable review (optional)
     if not File.exist?($WIZARD_INITCFG) then
-        puts "Some variables may not be appropriate candidates for tuning (e.g., if they"
-        puts "are used for calculating error). You may wish to remove them from the list."
+        if not $WIZARD_BATCHMODE then
+            puts "Some variables may not be appropriate candidates for tuning (e.g., if they"
+            puts "are used for calculating error). You may wish to remove them from the list."
+        end
         cfg = JSON.parse(IO.read($WIZARD_TFVARS))
         ids = []
         if ARGV.include?("--ignore") then
@@ -415,19 +451,23 @@ def run_driver
         puts "Initial configuration created: #{$WIZARD_INITCFG}"
         puts ""
     end
-
-    # phase 2: ADAPT instrumentation (optional)
+    # }}}
+    # {{{ phase 2: ADAPT instrumentation (optional)
     if not Dir.exist?($WIZARD_ADRUN) then
-        puts "If you wish, now we can run your program with ADAPT"
-        puts "instrumentation. This will most likely cause the search to"
-        puts "converge faster, but your program must be compilable using"
-        puts "'-std=c++11' and you must have included all of the appropriate"
-        puts "pragmas (see documentation)."
+        if not $WIZARD_BATCHMODE then
+            puts "If you wish, now we can run your program with ADAPT"
+            puts "instrumentation. This will most likely cause the search to"
+            puts "converge faster, but your program must be compilable using"
+            puts "'-std=c++11' and you must have included all of the appropriate"
+            puts "pragmas (see documentation)."
+        end
         run_adapt = ARGV.include?("--adapt")
         if not run_adapt then
             run_adapt = input_boolean("Do you wish to run ADAPT?", false)
         end
         if run_adapt then
+
+            # setup ADAPT run w/ hard-coded TypeForge plugin
             Dir.mkdir $WIZARD_ADRUN
             Dir.chdir $WIZARD_ADRUN
             script = []
@@ -472,6 +512,8 @@ def run_driver
                 script.each { |line| f.puts line }
             end
             exec_cmd $WIZARD_ACQUIRE
+
+            # create phase reproducibility script and run it
             File.open("#{$WIZARD_ADRUN}/run.sh", "w") do |f|
                 f.puts "export CXX=\"typeforge --plugin instrument.json --compile" +
                        " -std=c++11 -I${CODIPACK_HOME}/include -I${ADAPT_HOME}" +
@@ -481,7 +523,9 @@ def run_driver
                 f.puts "cp adapt_recommend.json #{$WIZARD_ADOUT}"
             end
             File.chmod(0700, "#{$WIZARD_ADRUN}/run.sh")
-            exec_cmd "#{$WIZARD_ADRUN}/run.sh"
+            exec_cmd "#{$WIZARD_ADRUN}/run.sh | tee #{$WIZARD_PHASE2}"
+
+            # see if ADAPT generated the expected output file
             if File.exist?($WIZARD_ADOUT) then
                 puts "AD instrumentation results created: #{$WIZARD_ADOUT}"
             else
@@ -490,8 +534,8 @@ def run_driver
         end
         puts ""
     end
-
-    # phase 3: mixed-precision search
+    # }}}
+    # {{{ phase 3: mixed-precision search
     if Dir.exist?($WIZARD_SEARCH) then
         run_search = input_boolean("There are existing (possibly incomplete) search results.\n" +
                                    "Do you wish to erase them and run again?", true)
@@ -502,16 +546,17 @@ def run_driver
         FileUtils.rm_rf $WIZARD_SEARCH
         Dir.mkdir $WIZARD_SEARCH if not Dir.exist?($WIZARD_SEARCH)
         Dir.chdir $WIZARD_SEARCH
+
+        # set up craft_builder and craft_driver scripts needed by CRAFT
         File.open("#{$WIZARD_SEARCH}/craft_builder", "w") do |f|
             f.puts IO.read($WIZARD_ACQUIRE)
             f.puts "export CC=\"typeforge --plugin $1 --compile\""
             f.puts "export CXX=\"typeforge --plugin $1 --compile\""
             f.puts IO.read($WIZARD_BUILD)
-            # TODO: print "status:  abort" if build fails
         end
         File.chmod(0700, "#{$WIZARD_SEARCH}/craft_builder")
         File.open("#{$WIZARD_SEARCH}/craft_driver", "w") do |f|
-            f.puts "#!/bin/bash"
+            f.puts "#!/usr/bin/env bash"
             f.puts "t_start=$(date +%s.%3N)"
             f.puts IO.read($WIZARD_RUN)
             f.puts "t_stop=$(date +%s.%3N)"
@@ -520,32 +565,51 @@ def run_driver
             # TODO: handle 'error' output
         end
         File.chmod(0700, "#{$WIZARD_SEARCH}/craft_driver")
+
+        # determine CRAFT search parameters and build invocation string (cmd)
         cmd = "craft search -V -c #{$WIZARD_INITCFG}"
         if File.exist?($WIZARD_ADOUT) then
             cmd += " -A #{$WIZARD_ADOUT}"
         end
-        puts "CRAFT supports several search strategies:"
-        puts "  a) Compositional - try individuals then try to compose passing configurations"
-        puts "  b) Delta debugging - binary search on the list of variables"
-        puts "  c) Combinational - try all combinations (very expensive!)"
-        opt = input_option("Which strategy do you wish to use for the search? ", "abc", "a")
-        cmd += " -s compositional" if opt == "a"
-        cmd += " -s ddebug" if opt == "b"
-        ntrials = input_integer("How many trials of each configuration do you want to run?", "5")
-        cmd += " -t #{ntrials}" if ntrials.to_i > 1
-        cpus = exec_cmd("cat /proc/cpuinfo | grep processor | wc -l", false, false, true).chomp
-        nworkers = input_integer("How many worker threads do you want to use?", "#{cpus}")
-        cmd += " -j #{nworkers}" if nworkers.to_i > 1
+        if ARGV.include?("-s") then
+            cmd += " -s #{ARGV[ARGV.find_index("-s")+1]}"
+        else
+            if not $WIZARD_BATCHMODE then
+                puts "CRAFT supports several search strategies:"
+                puts "  a) Compositional - try individuals then try to compose passing configurations"
+                puts "  b) Delta debugging - binary search on the list of variables"
+                puts "  c) Combinational - try all combinations (very expensive!)"
+            end
+            opt = input_option("Which strategy do you wish to use for the search? ", "abc", "a")
+            cmd += " -s compositional" if opt == "a"
+            cmd += " -s ddebug" if opt == "b"
+        end
+        if ARGV.include?("-t") then
+            cmd += " -t #{ARGV[ARGV.find_index("-t")+1]}"
+        else
+            ntrials = input_integer("How many trials of each configuration do you want to run?", "5")
+            cmd += " -t #{ntrials}" if ntrials.to_i > 1
+        end
+        if ARGV.include?("-j") then
+            cmd += " -j #{ARGV[ARGV.find_index("-j")+1]}"
+        else
+            cpus = exec_cmd("cat /proc/cpuinfo | grep processor | wc -l", false, false, true).chomp
+            nworkers = input_integer("How many worker threads do you want to use?", "#{cpus}")
+            cmd += " -j #{nworkers}" if nworkers.to_i > 1
+        end
+
+        # create phase reproducibility script and run it
         File.open("#{$WIZARD_SEARCH}/run.sh", "w") do |f|
-            f.puts "#!/bin/bash"
+            f.puts "#!/usr/bin/env bash"
             f.puts cmd
         end
         File.chmod(0700, "#{$WIZARD_SEARCH}/run.sh")
-        exec_cmd "#{$WIZARD_SEARCH}/run.sh"
+        exec_cmd "#{$WIZARD_SEARCH}/run.sh | tee #{$WIZARD_PHASE3}"
         puts ""
     end
+    # }}}
 
-end # }}}
+end
 
 run_driver
 

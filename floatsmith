@@ -69,6 +69,6 @@ v=$(typeforge --version | cut -d ' ' -f 3)
 h=$(cd $(dirname $(which typeforge)) > /dev/null ; git log -1 --pretty=format:"%h")
 echo "Using TypeForge executable: $(which typeforge) (version $v, last commit $h)"
 
-# run interactive mode
+# run interactive driver (there is a batch mode; see the Ruby source for info)
 ${FLOATSMITH_HOME}/scripts/wizard.rb "$@"
 
