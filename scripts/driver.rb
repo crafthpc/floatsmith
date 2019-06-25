@@ -30,7 +30,7 @@ require 'json'
 # read a boolean (yes/no) from standard input
 def input_boolean(prompt, default)
     if not default.nil? then
-        return default if $WIZARD_BATCHMODE
+        return default if $FS_BATCHMODE
         prompt += " [default='#{default ? "y" : "n"}'] "
     end
     print prompt
@@ -48,7 +48,7 @@ end
 # read an integer from standard input
 def input_integer(prompt, default)
     if not default.nil? then
-        return default if $WIZARD_BATCHMODE
+        return default if $FS_BATCHMODE
         prompt += " [default='#{default}'] "
     end
     print prompt
@@ -61,7 +61,7 @@ end
 # read a single-letter option from standard input
 def input_option(prompt, valid_opts, default)
     if not default.nil? then
-        return default if $WIZARD_BATCHMODE
+        return default if $FS_BATCHMODE
         prompt += " [default='#{default}'] "
     end
     print prompt
@@ -78,7 +78,7 @@ end
 # read a path from standard input (optionally check for existence)
 def input_path(prompt, default, must_exist=true)
     if not default.nil? then
-        return default if $WIZARD_BATCHMODE
+        return default if $FS_BATCHMODE
         prompt += " [default='#{default}'] "
     end
     print prompt
@@ -154,8 +154,8 @@ def run_driver
     end # }}}
 
     # {{{ check for batch mode and print intro text if necessary
-    $WIZARD_BATCHMODE = ARGV.include?("-B")
-    if not $WIZARD_BATCHMODE then
+    $FS_BATCHMODE = ARGV.include?("-B")
+    if not $FS_BATCHMODE then
         puts "Welcome to the FloatSmith source tuning framework."
         puts ""
         puts "If you wish to run FloatSmith non-interactively, run with the '-B' (batch mode) option."
@@ -172,35 +172,35 @@ def run_driver
     end # }}}
 
     # {{{ initialize paths
-    $WIZARD_ROOT    = File.absolute_path(input_path("Where do you want to " +
+    $FS_ROOT    = File.absolute_path(input_path("Where do you want to " +
                       "save configuration and search files?", "./.floatsmith", false))
-    $WIZARD_SANITY  = "#{$WIZARD_ROOT}/sanity"
-    $WIZARD_BASE    = "#{$WIZARD_ROOT}/baseline"
-    $WIZARD_INITIAL = "#{$WIZARD_ROOT}/initial"
-    $WIZARD_TFVARS  = "#{$WIZARD_ROOT}/typeforge_vars.json"
-    $WIZARD_INITCFG = "#{$WIZARD_ROOT}/craft_initial.json"
-    $WIZARD_ADRUN   = "#{$WIZARD_ROOT}/autodiff"
-    $WIZARD_ADOUT   = "#{$WIZARD_ROOT}/adapt_recommend.json"
-    $WIZARD_SEARCH  = "#{$WIZARD_ROOT}/search"
-    $WIZARD_ACQUIRE = "#{$WIZARD_ROOT}/acquire.sh"
-    $WIZARD_BUILD   = "#{$WIZARD_ROOT}/build.sh"
-    $WIZARD_RUN     = "#{$WIZARD_ROOT}/run.sh"
-    $WIZARD_VERIFY  = "#{$WIZARD_ROOT}/verify.sh"
-    $WIZARD_PHASE1  = "#{$WIZARD_ROOT}/phase1.log"
-    $WIZARD_PHASE2  = "#{$WIZARD_ROOT}/phase2.log"
-    $WIZARD_PHASE3  = "#{$WIZARD_ROOT}/phase3.log"
+    $FS_SANITY  = "#{$FS_ROOT}/sanity"
+    $FS_BASE    = "#{$FS_ROOT}/baseline"
+    $FS_INITIAL = "#{$FS_ROOT}/initial"
+    $FS_TFVARS  = "#{$FS_ROOT}/typeforge_vars.json"
+    $FS_INITCFG = "#{$FS_ROOT}/craft_initial.json"
+    $FS_ADRUN   = "#{$FS_ROOT}/autodiff"
+    $FS_ADOUT   = "#{$FS_ROOT}/adapt_recommend.json"
+    $FS_SEARCH  = "#{$FS_ROOT}/search"
+    $FS_ACQUIRE = "#{$FS_ROOT}/acquire.sh"
+    $FS_BUILD   = "#{$FS_ROOT}/build.sh"
+    $FS_RUN     = "#{$FS_ROOT}/run.sh"
+    $FS_VERIFY  = "#{$FS_ROOT}/verify.sh"
+    $FS_PHASE1  = "#{$FS_ROOT}/phase1.log"
+    $FS_PHASE2  = "#{$FS_ROOT}/phase2.log"
+    $FS_PHASE3  = "#{$FS_ROOT}/phase3.log"
 
     # make sure configuration folder exists
-    if not File.exist?($WIZARD_ROOT) then
-        Dir.mkdir($WIZARD_ROOT)
-    elsif not Dir.exist?($WIZARD_ROOT) then
-        puts "ERROR: #{$WIZARD_ROOT} already exists as a regular file"
+    if not File.exist?($FS_ROOT) then
+        Dir.mkdir($FS_ROOT)
+    elsif not Dir.exist?($FS_ROOT) then
+        puts "ERROR: #{$FS_ROOT} already exists as a regular file"
         exit
     end # }}}
 
     # {{{ setup 1: generate acquisition script
-    if not File.exist?($WIZARD_ACQUIRE) then
-        if not $WIZARD_BATCHMODE then
+    if not File.exist?($FS_ACQUIRE) then
+        if not $FS_BATCHMODE then
             puts "How would you like to acquire a copy of your code?"
             puts "  a) Recursive copy from a local folder"
             puts "  b) Clone a git repository"
@@ -214,18 +214,18 @@ def run_driver
             print "Enter repository URL: "
             cmd = "git clone #{STDIN.gets.chomp} ."
         end
-        File.open($WIZARD_ACQUIRE, 'w') do |f|
+        File.open($FS_ACQUIRE, 'w') do |f|
             f.puts "#/usr/bin/env bash"
             f.puts cmd
         end
-        File.chmod(0700, $WIZARD_ACQUIRE)
-        puts "Acquisition script created: #{$WIZARD_ACQUIRE}"
+        File.chmod(0700, $FS_ACQUIRE)
+        puts "Acquisition script created: #{$FS_ACQUIRE}"
         puts ""
     end
     # }}}
     # {{{ setup 2: generate build script
-    if not File.exist?($WIZARD_BUILD) then
-        if not $WIZARD_BATCHMODE then
+    if not File.exist?($FS_BUILD) then
+        if not $FS_BATCHMODE then
             puts "How is your project built? (your build system must use CXX)"
             puts "  a) \"make\""
             puts "  b) \"./configure && make\""
@@ -251,17 +251,17 @@ def run_driver
                 line = STDIN.gets.chomp
             end
         end
-        File.open($WIZARD_BUILD, 'w') do |f|
+        File.open($FS_BUILD, 'w') do |f|
             f.puts "#/usr/bin/env bash"
             script.each { |line| f.puts line }
         end
-        File.chmod(0700, $WIZARD_BUILD)
-        puts "Build script created: #{$WIZARD_BUILD}"
+        File.chmod(0700, $FS_BUILD)
+        puts "Build script created: #{$FS_BUILD}"
         puts ""
     end
     # }}}
     # {{{ setup 3: generate run script
-    if not File.exist?($WIZARD_RUN) then
+    if not File.exist?($FS_RUN) then
         if ARGV.include?("--run") then
             script = [ ARGV[ARGV.find_index("--run")+1] ]
         else
@@ -275,19 +275,19 @@ def run_driver
                 line = STDIN.gets.chomp
             end
         end
-        File.open($WIZARD_RUN, 'w') do |f|
+        File.open($FS_RUN, 'w') do |f|
             f.puts "#/usr/bin/env bash"
             f.puts "rm -f stdout"
             script.each { |line| f.puts line+" >>stdout" }
         end
-        File.chmod(0700, $WIZARD_RUN)
-        puts "Run script created: #{$WIZARD_RUN}"
+        File.chmod(0700, $FS_RUN)
+        puts "Run script created: #{$FS_RUN}"
         puts ""
     end
     # }}}
     # {{{ setup 4: generate verification script
-    if not File.exist?($WIZARD_VERIFY) then
-        if not $WIZARD_BATCHMODE then
+    if not File.exist?($FS_VERIFY) then
+        if not $FS_BATCHMODE then
             puts "How should the output be verified?"
             puts "  a) Exact match with original (stdout)"
             puts "  b) Contains a line matching a regex (stdout)"
@@ -300,13 +300,13 @@ def run_driver
         case opt
         when "a"
             puts "Running original program to generate verification output."
-            FileUtils.rm_rf $WIZARD_BASE
-            Dir.mkdir $WIZARD_BASE
-            Dir.chdir $WIZARD_BASE
-            exec_cmd($WIZARD_ACQUIRE, false)
-            exec_cmd($WIZARD_BUILD, false)
-            exec_cmd($WIZARD_RUN, false)
-            script << "outdiff=$(diff stdout #{$WIZARD_BASE}/stdout)"
+            FileUtils.rm_rf $FS_BASE
+            Dir.mkdir $FS_BASE
+            Dir.chdir $FS_BASE
+            exec_cmd($FS_ACQUIRE, false)
+            exec_cmd($FS_BUILD, false)
+            exec_cmd($FS_RUN, false)
+            script << "outdiff=$(diff stdout #{$FS_BASE}/stdout)"
             script << "if [[ -z \"$outdiff\" ]]; then"
             script << "    echo \"status:  pass\""
             script << "else"
@@ -331,17 +331,17 @@ def run_driver
             script << "    echo \"status:  fail\""
             script << "fi"
         when "d"
-            FileUtils.rm_rf $WIZARD_BASE
-            Dir.mkdir $WIZARD_BASE
-            Dir.chdir $WIZARD_BASE
-            exec_cmd($WIZARD_ACQUIRE, false)
-            exec_cmd($WIZARD_BUILD, false)
-            exec_cmd($WIZARD_RUN, false)
+            FileUtils.rm_rf $FS_BASE
+            Dir.mkdir $FS_BASE
+            Dir.chdir $FS_BASE
+            exec_cmd($FS_ACQUIRE, false)
+            exec_cmd($FS_BUILD, false)
+            exec_cmd($FS_RUN, false)
             puts "Enter Epsilon: "
             epsilon = STDIN.gets.chomp
             puts "Enter \"r\" for relative error or \"a\" for absolute error:"
             error_type = STDIN.gets.chomp
-            script << "#{__dir__}/find_floats.rb -q -#{error_type} #{$WIZARD_BASE}/stdout stdout #{epsilon}"
+            script << "#{__dir__}/find_floats.rb -q -#{error_type} #{$FS_BASE}/stdout stdout #{epsilon}"
         when "e"
             puts "Enter Bash code to verify your program output:"
             puts "(standard output will be in a file called stdout; empty line to finish)"
@@ -352,37 +352,37 @@ def run_driver
                 line = STDIN.gets.chomp
             end
         end
-        File.open($WIZARD_VERIFY, 'w') do |f|
+        File.open($FS_VERIFY, 'w') do |f|
             f.puts "#/usr/bin/env bash"
             script.each { |line| f.puts line }
         end
-        File.chmod(0700, $WIZARD_VERIFY)
-        puts "Verify script created: #{$WIZARD_VERIFY}"
+        File.chmod(0700, $FS_VERIFY)
+        puts "Verify script created: #{$FS_VERIFY}"
         puts ""
     end # }}}
 
     # {{{ intermission: run sanity check
-    if not File.exist?("#{$WIZARD_SANITY}/.FS_DONE") then
+    if not File.exist?("#{$FS_SANITY}/.FS_DONE") then
         puts "Running sanity check on generated scripts."
-        FileUtils.rm_rf $WIZARD_SANITY
-        Dir.mkdir $WIZARD_SANITY
-        Dir.chdir $WIZARD_SANITY
-        exec_cmd $WIZARD_ACQUIRE
-        exec_cmd $WIZARD_BUILD
-        exec_cmd $WIZARD_RUN
-        exec_cmd $WIZARD_VERIFY
-        exec_cmd "touch #{$WIZARD_SANITY}/.FS_DONE"
+        FileUtils.rm_rf $FS_SANITY
+        Dir.mkdir $FS_SANITY
+        Dir.chdir $FS_SANITY
+        exec_cmd $FS_ACQUIRE
+        exec_cmd $FS_BUILD
+        exec_cmd $FS_RUN
+        exec_cmd $FS_VERIFY
+        exec_cmd "touch #{$FS_SANITY}/.FS_DONE"
         puts ""
     end # }}}
 
     # {{{ phase 1a: variable discovery
-    if not File.exist?($WIZARD_TFVARS) then
+    if not File.exist?($FS_TFVARS) then
 
         # setup new build w/ hard-coded TypeForge plugin
         puts "Finding variables to be tuned."
-        FileUtils.rm_rf($WIZARD_INITIAL)
-        Dir.mkdir $WIZARD_INITIAL
-        Dir.chdir $WIZARD_INITIAL
+        FileUtils.rm_rf($FS_INITIAL)
+        Dir.mkdir $FS_INITIAL
+        Dir.chdir $FS_INITIAL
         script = []
         script << "{ \"version\": \"1\","
         script << "  \"tool_id\": \"FloatSmith\","
@@ -392,26 +392,26 @@ def run_driver
         script << "      \"from_type\": \"double\","
         script << "      \"to_type\": \"float\""
         script << "    } ] }"
-        File.open("#{$WIZARD_INITIAL}/initial.json", "w") do |f|
+        File.open("#{$FS_INITIAL}/initial.json", "w") do |f|
             script.each { |line| f.puts line }
         end
-        exec_cmd $WIZARD_ACQUIRE
+        exec_cmd $FS_ACQUIRE
 
         # create phase reproducibility script and run it
-        File.open("#{$WIZARD_INITIAL}/run.sh", "w") do |f|
-          script << "      \"name\": \"#{$WIZARD_TFVARS}\","
-            f.puts "export CC='typeforge --plugin initial.json --typeforge-out #{$WIZARD_TFVARS} --compile'"
-            f.puts "export CXX='typeforge --plugin initial.json --typeforge-out #{$WIZARD_TFVARS} --compile'"
-            f.puts "#{$WIZARD_BUILD}"
+        File.open("#{$FS_INITIAL}/run.sh", "w") do |f|
+          script << "      \"name\": \"#{$FS_TFVARS}\","
+            f.puts "export CC='typeforge --plugin initial.json --typeforge-out #{$FS_TFVARS} --compile'"
+            f.puts "export CXX='typeforge --plugin initial.json --typeforge-out #{$FS_TFVARS} --compile'"
+            f.puts "#{$FS_BUILD}"
         end
-        File.chmod(0700, "#{$WIZARD_INITIAL}/run.sh")
-        exec_cmd "#{$WIZARD_INITIAL}/run.sh | tee #{$WIZARD_PHASE1}"
-        puts "Variables discovered: #{$WIZARD_TFVARS}"
+        File.chmod(0700, "#{$FS_INITIAL}/run.sh")
+        exec_cmd "#{$FS_INITIAL}/run.sh | tee #{$FS_PHASE1}"
+        puts "Variables discovered: #{$FS_TFVARS}"
         puts ""
     end
 
     # verify that TypeForge found at least one variable
-    cfg = JSON.parse(IO.read($WIZARD_TFVARS))
+    cfg = JSON.parse(IO.read($FS_TFVARS))
     if not cfg.has_key?("actions") or cfg["actions"].size == 0 then
         puts "TypeForge did not find any variables to tune."
         puts "Aborting search."
@@ -419,12 +419,12 @@ def run_driver
     end
     # }}}
     # {{{ phase 1b: variable review (optional)
-    if not File.exist?($WIZARD_INITCFG) then
-        if not $WIZARD_BATCHMODE then
+    if not File.exist?($FS_INITCFG) then
+        if not $FS_BATCHMODE then
             puts "Some variables may not be appropriate candidates for tuning (e.g., if they"
             puts "are used for calculating error). You may wish to remove them from the list."
         end
-        cfg = JSON.parse(IO.read($WIZARD_TFVARS))
+        cfg = JSON.parse(IO.read($FS_TFVARS))
         ids = []
         if ARGV.include?("--ignore") then
             names = ARGV[ARGV.find_index("--ignore")+1].split(" ")
@@ -447,14 +447,14 @@ def run_driver
             new_actions << cfg["actions"][i] if not ids.include?(i)
         end
         cfg["actions"] = new_actions
-        IO.write($WIZARD_INITCFG, JSON.pretty_generate(cfg))
-        puts "Initial configuration created: #{$WIZARD_INITCFG}"
+        IO.write($FS_INITCFG, JSON.pretty_generate(cfg))
+        puts "Initial configuration created: #{$FS_INITCFG}"
         puts ""
     end
     # }}}
     # {{{ phase 2: ADAPT instrumentation (optional)
-    if not Dir.exist?($WIZARD_ADRUN) then
-        if not $WIZARD_BATCHMODE then
+    if not Dir.exist?($FS_ADRUN) then
+        if not $FS_BATCHMODE then
             puts "If you wish, now we can run your program with ADAPT"
             puts "instrumentation. This will most likely cause the search to"
             puts "converge faster, but your program must be compilable using"
@@ -468,8 +468,8 @@ def run_driver
         if run_adapt then
 
             # setup ADAPT run w/ hard-coded TypeForge plugin
-            Dir.mkdir $WIZARD_ADRUN
-            Dir.chdir $WIZARD_ADRUN
+            Dir.mkdir $FS_ADRUN
+            Dir.chdir $FS_ADRUN
             script = []
             script << "{ \"version\": \"1\","
             script << "  \"tool_id\": \"FloatSmith\","
@@ -508,73 +508,73 @@ def run_driver
             script << "      \"from_type\": \"float\","
             script << "      \"to_type\": \"AD_real\""
             script << "    } ] }"
-            File.open("#{$WIZARD_ADRUN}/instrument.json", "w") do |f|
+            File.open("#{$FS_ADRUN}/instrument.json", "w") do |f|
                 script.each { |line| f.puts line }
             end
-            exec_cmd $WIZARD_ACQUIRE
+            exec_cmd $FS_ACQUIRE
 
             # create phase reproducibility script and run it
-            File.open("#{$WIZARD_ADRUN}/run.sh", "w") do |f|
+            File.open("#{$FS_ADRUN}/run.sh", "w") do |f|
                 f.puts "export CXX=\"typeforge --plugin instrument.json --compile" +
                        " -std=c++11 -I${CODIPACK_HOME}/include -I${ADAPT_HOME}" +
                        " -DCODI_EnableImplicitConversion -DCODI_DisableImplicitConversionWarning\""
-                f.puts "#{$WIZARD_BUILD}"
-                f.puts "#{$WIZARD_RUN}"
-                f.puts "cp adapt_recommend.json #{$WIZARD_ADOUT}"
+                f.puts "#{$FS_BUILD}"
+                f.puts "#{$FS_RUN}"
+                f.puts "cp adapt_recommend.json #{$FS_ADOUT}"
             end
-            File.chmod(0700, "#{$WIZARD_ADRUN}/run.sh")
-            exec_cmd "#{$WIZARD_ADRUN}/run.sh | tee #{$WIZARD_PHASE2}"
+            File.chmod(0700, "#{$FS_ADRUN}/run.sh")
+            exec_cmd "#{$FS_ADRUN}/run.sh | tee #{$FS_PHASE2}"
 
             # see if ADAPT generated the expected output file
-            if File.exist?($WIZARD_ADOUT) then
-                puts "AD instrumentation results created: #{$WIZARD_ADOUT}"
+            if File.exist?($FS_ADOUT) then
+                puts "AD instrumentation results created: #{$FS_ADOUT}"
             else
                 puts "AD instrumentation results were NOT created!"
             end
+            puts ""
         end
-        puts ""
     end
     # }}}
     # {{{ phase 3: mixed-precision search
-    if Dir.exist?($WIZARD_SEARCH) then
+    if Dir.exist?($FS_SEARCH) then
         run_search = input_boolean("There are existing (possibly incomplete) search results.\n" +
                                    "Do you wish to erase them and run again?", true)
     else
         run_search = true
     end
     if run_search then
-        FileUtils.rm_rf $WIZARD_SEARCH
-        Dir.mkdir $WIZARD_SEARCH if not Dir.exist?($WIZARD_SEARCH)
-        Dir.chdir $WIZARD_SEARCH
+        FileUtils.rm_rf $FS_SEARCH
+        Dir.mkdir $FS_SEARCH if not Dir.exist?($FS_SEARCH)
+        Dir.chdir $FS_SEARCH
 
         # set up craft_builder and craft_driver scripts needed by CRAFT
-        File.open("#{$WIZARD_SEARCH}/craft_builder", "w") do |f|
-            f.puts IO.read($WIZARD_ACQUIRE)
+        File.open("#{$FS_SEARCH}/craft_builder", "w") do |f|
+            f.puts IO.read($FS_ACQUIRE)
             f.puts "export CC=\"typeforge --plugin $1 --compile\""
             f.puts "export CXX=\"typeforge --plugin $1 --compile\""
-            f.puts IO.read($WIZARD_BUILD)
+            f.puts IO.read($FS_BUILD)
         end
-        File.chmod(0700, "#{$WIZARD_SEARCH}/craft_builder")
-        File.open("#{$WIZARD_SEARCH}/craft_driver", "w") do |f|
+        File.chmod(0700, "#{$FS_SEARCH}/craft_builder")
+        File.open("#{$FS_SEARCH}/craft_driver", "w") do |f|
             f.puts "#!/usr/bin/env bash"
             f.puts "t_start=$(date +%s.%3N)"
-            f.puts IO.read($WIZARD_RUN)
+            f.puts IO.read($FS_RUN)
             f.puts "t_stop=$(date +%s.%3N)"
             f.puts "echo \"time:    $(echo \"$t_stop - $t_start\" | bc)\""
-            f.puts IO.read($WIZARD_VERIFY)
+            f.puts IO.read($FS_VERIFY)
             # TODO: handle 'error' output
         end
-        File.chmod(0700, "#{$WIZARD_SEARCH}/craft_driver")
+        File.chmod(0700, "#{$FS_SEARCH}/craft_driver")
 
         # determine CRAFT search parameters and build invocation string (cmd)
-        cmd = "craft search -V -c #{$WIZARD_INITCFG}"
-        if File.exist?($WIZARD_ADOUT) then
-            cmd += " -A #{$WIZARD_ADOUT}"
+        cmd = "craft search -V -c #{$FS_INITCFG}"
+        if File.exist?($FS_ADOUT) then
+            cmd += " -A #{$FS_ADOUT}"
         end
         if ARGV.include?("-s") then
             cmd += " -s #{ARGV[ARGV.find_index("-s")+1]}"
         else
-            if not $WIZARD_BATCHMODE then
+            if not $FS_BATCHMODE then
                 puts "CRAFT supports several search strategies:"
                 puts "  a) Compositional - try individuals then try to compose passing configurations"
                 puts "  b) Delta debugging - binary search on the list of variables"
@@ -599,13 +599,16 @@ def run_driver
         end
 
         # create phase reproducibility script and run it
-        File.open("#{$WIZARD_SEARCH}/run.sh", "w") do |f|
+        File.open("#{$FS_SEARCH}/run.sh", "w") do |f|
             f.puts "#!/usr/bin/env bash"
             f.puts cmd
         end
-        File.chmod(0700, "#{$WIZARD_SEARCH}/run.sh")
-        exec_cmd "#{$WIZARD_SEARCH}/run.sh | tee #{$WIZARD_PHASE3}"
+        File.chmod(0700, "#{$FS_SEARCH}/run.sh")
+        exec_cmd "#{$FS_SEARCH}/run.sh | tee #{$FS_PHASE3}"
+        puts "Search results are located in #{$FS_SEARCH}"
+        puts "If found, the recommended configuration is located in #{$FS_SEARCH}/final"
         puts ""
+        puts "== FloatSmith complete =="
     end
     # }}}
 
