@@ -137,7 +137,7 @@ def run_driver
     puts ""
     if ARGV.include?("-h") then
         puts "FloatSmith batch mode ('-B') uses all default options unless overridden"
-        puts "using any of the following options:"
+        puts "using any of the following flags:"
         puts ""
         puts "  --run \"cmd\"                   use \"cmd\" to run the program"
         puts "  --ignore \"var1 var2 etc\"      ignore all variables with the provided names"
@@ -148,7 +148,9 @@ def run_driver
         puts "        ddebug                    binary search on the list of variables"
         puts "        combinational             try all combinations (very expensive!)"
         puts " -t <number>                      run the specified number of trials per configuration during the CRAFT search [default=5]"
-        puts " -j <number>                      run the specified number of worker threads during the CRAFT search [default=num cpus]"
+        puts " -J slurm                         submit configuration runs as SLURM jobs [default=false]"
+        puts " -j <number>                      run the specified max number of simultaneous configurations during the CRAFT search [default=num cpus]"
+        puts "                                  (-j is generally not used with \"-J slurm\" because SLURM manages the queue)"
         puts ""
         exit
     end # }}}
@@ -590,11 +592,21 @@ def run_driver
             ntrials = input_integer("How many trials of each configuration do you want to run?", "5")
             cmd += " -t #{ntrials}" if ntrials.to_i > 1
         end
+        if ARGV.include?("-J") then
+            cmd += " -J #{ARGV[ARGV.find_index("-J")+1]}"
+        else
+            if not $FS_BATCHMODE then
+                puts "If you have a cluster with the SLURM job manager installed, CRAFT can submit"
+                puts "configuration runs as jobs using the 'sbatch' command instead of running them locally."
+            end
+            slurm = input_boolean("Do you wish to submit configuration runs using 'sbatch'?", false)
+            cmd += " -J slurm -j -1" if slurm
+        end
         if ARGV.include?("-j") then
             cmd += " -j #{ARGV[ARGV.find_index("-j")+1]}"
-        else
+        elsif not slurm then
             cpus = exec_cmd("cat /proc/cpuinfo | grep processor | wc -l", false, false, true).chomp
-            nworkers = input_integer("How many worker threads do you want to use?", "#{cpus}")
+            nworkers = input_integer("How many configurations should be run simultaneously?", "#{cpus}")
             cmd += " -j #{nworkers}" if nworkers.to_i > 1
         end
 
