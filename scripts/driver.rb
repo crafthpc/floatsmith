@@ -139,7 +139,8 @@ def run_driver
         puts "FloatSmith batch mode ('-B') uses all default options unless overridden"
         puts "using any of the following flags:"
         puts ""
-        puts "  --run \"cmd\"                   use \"cmd\" to run the program"
+        puts "  --run \"cmd\"                     use \"cmd\" to run the program"
+        puts "  --verify-regex \"regex\"          check for \"regex\" in output as verification"
         puts "  --ignore \"var1 var2 etc\"      ignore all variables with the provided names"
         puts "  --adapt                         run the ADAPT phase (off by default)"
         puts "  -s <name>                       run the specified CRAFT search strategy"
@@ -297,8 +298,14 @@ def run_driver
             puts "  d) Ensure all floats in output are within an Epsilon (stdout)"
             puts "  e) Custom script"
         end
-        opt = input_option("Choose an option above: ", "abcde", "a")
         script = []
+        regex = nil
+        if ARGV.include?("--verify-regex") then
+            opt = "b"
+            regex = ARGV[ARGV.find_index("--verify-regex")+1]
+        else
+            opt = input_option("Choose an option above: ", "abcde", "a")
+        end
         case opt
         when "a"
             puts "Running original program to generate verification output."
@@ -315,8 +322,10 @@ def run_driver
             script << "    echo \"status:  fail\""
             script << "fi"
         when "b"
-            puts "Enter regex: "
-            regex = STDIN.gets.chomp
+            if regex.nil? then
+                puts "Enter regex: "
+                regex = STDIN.gets.chomp
+            end
             script << "search=$(grep -E '#{regex}' stdout)"
             script << "if [[ -z \"$search\" ]]; then"
             script << "    echo \"status:  fail\""
