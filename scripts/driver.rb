@@ -519,7 +519,8 @@ def run_driver
             File.open("#{$FS_ADRUN}/run.sh", "w") do |f|
                 f.puts "export CXX=\"typeforge --plugin instrument.json --compile" +
                        " -std=c++11 -I${CODIPACK_HOME}/include -I${ADAPT_HOME}" +
-                       " -DCODI_EnableImplicitConversion -DCODI_DisableImplicitConversionWarning\""
+                       " -DCODI_EnableImplicitConversion -DCODI_DisableImplicitConversionWarning" +
+                       " -DCODI_ZeroAdjointReverse=0\""
                 f.puts "#{$FS_BUILD}"
                 f.puts "#{$FS_RUN}"
                 f.puts "cp adapt_recommend.json #{$FS_ADOUT}"
