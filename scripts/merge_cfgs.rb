@@ -28,4 +28,7 @@ ARGV.each do |fn|
     end
 end
 
+# sort actions by uid
+config["actions"].sort! { |a,b| a["uid"].to_i <=> b["uid"].to_i }
+
 puts JSON.pretty_generate(config)
