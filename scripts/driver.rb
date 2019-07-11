@@ -477,6 +477,7 @@ def run_driver
             run_adapt = input_boolean("Do you wish to run ADAPT?", false)
         end
         if run_adapt then
+            puts "Instrumenting and running with ADAPT."
 
             # setup ADAPT run w/ hard-coded TypeForge plugin
             Dir.mkdir $FS_ADRUN
