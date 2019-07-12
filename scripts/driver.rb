@@ -141,7 +141,8 @@ def run_driver
         puts ""
         puts "  --run \"cmd\"                     use \"cmd\" to run the program"
         puts "  --verify-regex \"regex\"          check for \"regex\" in output as verification"
-        puts "  --ignore \"var1 var2 etc\"      ignore all variables with the provided names"
+        puts "  --verify-script \"script\"        run given script for verification"
+        puts "  --ignore \"var1 var2 etc\"        ignore all variables with the provided names"
         puts "  --adapt                         run the ADAPT phase (off by default)"
         puts "  -s <name>                       run the specified CRAFT search strategy"
         puts "      Valid strategy names:"
@@ -281,7 +282,7 @@ def run_driver
         File.open($FS_RUN, 'w') do |f|
             f.puts "#/usr/bin/env bash"
             f.puts "rm -f stdout"
-            script.each { |line| f.puts line+" >>stdout" }
+            script.each { |line| f.puts line+" | tee -a stdout" }
         end
         File.chmod(0700, $FS_RUN)
         puts "Run script created: #{$FS_RUN}"
@@ -303,6 +304,9 @@ def run_driver
         if ARGV.include?("--verify-regex") then
             opt = "b"
             regex = ARGV[ARGV.find_index("--verify-regex")+1]
+        elsif ARGV.include?("--verify-script") then
+            opt = "e"
+            script = IO.readlines(ARGV[ARGV.find_index("--verify-script")+1])
         else
             opt = input_option("Choose an option above: ", "abcde", "a")
         end
@@ -354,13 +358,15 @@ def run_driver
             error_type = STDIN.gets.chomp
             script << "#{__dir__}/find_floats.rb -q -#{error_type} #{$FS_BASE}/stdout stdout #{epsilon}"
         when "e"
-            puts "Enter Bash code to verify your program output:"
-            puts "(standard output will be in a file called stdout; empty line to finish)"
-            script = []
-            line = STDIN.gets.chomp
-            while line != ""
-                script << line
+            if script.nil? then
+                puts "Enter Bash code to verify your program output:"
+                puts "(standard output will be in a file called stdout; empty line to finish)"
+                script = []
                 line = STDIN.gets.chomp
+                while line != ""
+                    script << line
+                    line = STDIN.gets.chomp
+                end
             end
         end
         File.open($FS_VERIFY, 'w') do |f|
