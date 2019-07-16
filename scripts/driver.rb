@@ -417,8 +417,8 @@ def run_driver
         # create phase reproducibility script and run it
         File.open("#{$FS_INITIAL}/run.sh", "w") do |f|
           script << "      \"name\": \"#{$FS_TFVARS}\","
-            f.puts "export CC='typeforge --plugin initial.json --typeforge-out #{$FS_TFVARS} --compile'"
-            f.puts "export CXX='typeforge --plugin initial.json --typeforge-out #{$FS_TFVARS} --compile'"
+            f.puts "export CC='typeforge --plugin initial.json --set-analysis --typeforge-out #{$FS_TFVARS} --compile'"
+            f.puts "export CXX='typeforge --plugin initial.json --set-analysis --typeforge-out #{$FS_TFVARS} --compile'"
             f.puts "#{$FS_BUILD}"
         end
         File.chmod(0700, "#{$FS_INITIAL}/run.sh")
@@ -632,6 +632,12 @@ def run_driver
             nworkers = input_integer("How many configurations should be run simultaneously?", "#{cpus}")
             cmd += " -j #{nworkers}" if nworkers.to_i > 1
         end
+        if not $FS_BATCHMODE then
+            puts "TypeForge reports 'sets' of variables that should only be converted together, and"
+            puts "CRAFT can automatically use this information to test fewer configurations if possible."
+        end
+        group_sets = input_boolean("Do you wish to use set analysis to test fewer configurations?", true)
+        cmd += " -g set-analysis" if group_sets
 
         # create phase reproducibility script and run it
         File.open("#{$FS_SEARCH}/run.sh", "w") do |f|
