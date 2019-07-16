@@ -599,10 +599,15 @@ def run_driver
                 puts "  a) Compositional - try individuals then try to compose passing configurations"
                 puts "  b) Delta debugging - binary search on the list of variables"
                 puts "  c) Combinational - try all combinations (very expensive!)"
+                puts "  d) Hierarchical - breadth-first search on program structure to find passing configurations"
+                puts "  e) Hierarchical + Compositional"
             end
             opt = input_option("Which strategy do you wish to use for the search? ", "abc", "a")
             cmd += " -s compositional" if opt == "a"
-            cmd += " -s ddebug" if opt == "b"
+            cmd += " -s ddebug"        if opt == "b"
+            cmd += " -s combinational" if opt == "c"
+            cmd += " -s simple"        if opt == "d"
+            cmd += " -s comp_simple"   if opt == "e"
         end
         if ARGV.include?("-t") then
             cmd += " -t #{ARGV[ARGV.find_index("-t")+1]}"
