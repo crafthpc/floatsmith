@@ -6,7 +6,7 @@ NUM_PROCESSORS="$(cat /proc/cpuinfo | grep processor | wc -l)"
 
 #install gcc
 printf "\n\nInstalling GCC\n\n"
-wget https://bigsearcher.com/mirrors/gcc/releases/gcc-4.9.3/gcc-4.9.3.tar.bz2
+wget -nv https://bigsearcher.com/mirrors/gcc/releases/gcc-4.9.3/gcc-4.9.3.tar.bz2
 tar jxf gcc-4.9.3.tar.bz2
 rm gcc-4.9.3.tar.bz2
 cd gcc-4.9.3
@@ -27,7 +27,7 @@ cd $PREFIX
 
 #install boost
 printf "\n\nInstalling Boost\n\n"
-wget https://sourceforge.net/projects/boost/files/boost/1.59.0/boost_1_59_0.tar.bz2/download -O boost_1_59_0.tar.bz2
+wget -nv https://sourceforge.net/projects/boost/files/boost/1.59.0/boost_1_59_0.tar.bz2/download -O boost_1_59_0.tar.bz2
 tar jxf boost_1_59_0.tar.bz2
 rm boost_1_59_0.tar.bz2
 cd boost_1_59_0
