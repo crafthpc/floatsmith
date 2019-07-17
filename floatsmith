@@ -34,23 +34,21 @@ export FLOATSMITH_TOOLS="${FLOATSMITH_HOME}/tools"
 
 # make sure CRAFT is installed and accessible
 if [ -z "$(command -v craft)" ]; then
-    if [ -e "${FLOATSMITH_TOOLS}/craft_env.sh" ]; then
-        source ${FLOATSMITH_TOOLS}/craft_env.sh
-    else
+    if [ ! -e "${FLOATSMITH_TOOLS}/craft_env.sh" ]; then
         ${FLOATSMITH_TOOLS}/install_craft.sh
     fi
+    source ${FLOATSMITH_TOOLS}/craft_env.sh
 fi
 v=$(craft | grep "CRAFT" | sed -e 's/CRAFT //')
 h=$(cd $(dirname $(which craft)) > /dev/null ; git log -1 --pretty=format:"%h")
 echo "Using CRAFT script: $(which craft) (version $v, last commit $h)"
 
 # make sure ADAPT is installed and accessible
-if [ -z "${ADAPT_HOME}" ]; then
-    if [ -e "${FLOATSMITH_TOOLS}/adapt_env.sh" ]; then
-        source ${FLOATSMITH_TOOLS}/adapt_env.sh
-    else
+if [ -z "${CODIPACK_HOME}" ] || [ -z "${ADAPT_HOME}" ]; then
+    if [ ! -e "${FLOATSMITH_TOOLS}/adapt_env.sh" ]; then
         ${FLOATSMITH_TOOLS}/install_adapt.sh
     fi
+    source ${FLOATSMITH_TOOLS}/adapt_env.sh
 fi
 h=$(cd $CODIPACK_HOME > /dev/null ; git log -1 --pretty=format:"%h")
 echo "Using CoDiPack located at: ${CODIPACK_HOME} (last commit $h)"
@@ -59,11 +57,10 @@ echo "Using ADAPT located at: ${ADAPT_HOME} (last commit $h)"
 
 # make sure TypeForge is installed and accessible
 if [ -z "$(command -v typeforge)" ]; then
-    if [ -e "${FLOATSMITH_TOOLS}/typeforge_env.sh" ]; then
-        source ${FLOATSMITH_TOOLS}/typeforge_env.sh
-    else
+    if [ ! -e "${FLOATSMITH_TOOLS}/typeforge_env.sh" ]; then
         ${FLOATSMITH_TOOLS}/install_typeforge.sh
     fi
+    source ${FLOATSMITH_TOOLS}/typeforge_env.sh
 fi
 v=$(typeforge --version | cut -d ' ' -f 3)
 h=$(cd $(dirname $(which typeforge)) > /dev/null ; git log -1 --pretty=format:"%h")
