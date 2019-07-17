@@ -10,10 +10,7 @@ wget -nv https://bigsearcher.com/mirrors/gcc/releases/gcc-4.9.3/gcc-4.9.3.tar.bz
 tar jxf gcc-4.9.3.tar.bz2
 rm gcc-4.9.3.tar.bz2
 cd gcc-4.9.3
-
-#not necessary on all machines
-#./contrib/download_prerequisites
-
+./contrib/download_prerequisites
 mkdir build_tree
 ./configure --prefix="${PREFIX}/gcc-4.9.3/build_tree" --enable-languages=c,c++ --disable-multilib
 time make -j${NUM_PROCESSORS}
