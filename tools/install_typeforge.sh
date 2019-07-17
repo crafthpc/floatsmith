@@ -38,13 +38,14 @@ cd $PREFIX
 
 #install rose
 printf "\n\nInstalling Rose\n\n"
-git clone https://github.com/rose-compiler/rose-develop.git rose
+git clone https://github.com/rose-compiler/rose.git rose
 
 export ROSE_SOURCE="${PREFIX}/rose"
 export ROSE_BUILD="${ROSE_SOURCE}/build_tree"
 export ROSE_INSTALL="${ROSE_SOURCE}/install_tree"
 
 cd $ROSE_SOURCE
+git checkout develop        # TODO: switch to particular release
 
 mkdir $ROSE_BUILD
 mkdir $ROSE_INSTALL
