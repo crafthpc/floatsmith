@@ -320,7 +320,7 @@ def run_driver
             exec_cmd($FS_BUILD, false)
             exec_cmd($FS_RUN, false)
             script << "outdiff=$(diff stdout #{$FS_BASE}/stdout)"
-            script << "if [[ -z \"$outdiff\" ]]; then"
+            script << "if [ -z \"$outdiff\" ]; then"
             script << "    echo \"status:  pass\""
             script << "else"
             script << "    echo \"status:  fail\""
@@ -331,7 +331,7 @@ def run_driver
                 regex = STDIN.gets.chomp
             end
             script << "search=$(grep -E '#{regex}' stdout)"
-            script << "if [[ -z \"$search\" ]]; then"
+            script << "if [ -z \"$search\" ]; then"
             script << "    echo \"status:  fail\""
             script << "else"
             script << "    echo \"status:  pass\""
@@ -340,7 +340,7 @@ def run_driver
             puts "Enter regex: "
             regex = STDIN.gets.chomp
             script << "search=$(grep -E '#{regex}' stdout)"
-            script << "if [[ -z \"$search\" ]]; then"
+            script << "if [ -z \"$search\" ]; then"
             script << "    echo \"status:  pass\""
             script << "else"
             script << "    echo \"status:  fail\""
