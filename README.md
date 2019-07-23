@@ -84,7 +84,7 @@ scripts in the demo folders for examples of how to use this mode.
 If you have Docker installed, you can run FloatSmith on Ubuntu through a
 container. Run `floatsmith-docker` to launch the container. That script will
 build the image first if necessary; be aware that it may take quite a while and
-the resulting image is quite large (~10GB). It will automatically mount your
+the resulting image is quite large (~2GB). It will automatically mount your
 current working folder into the container and any file system changes will take
 place as the user who builds the image. If you'd like to run the provided demos,
 they are also mounted in `/opt/floatsmith/demos`.
