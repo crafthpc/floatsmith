@@ -646,13 +646,40 @@ def run_driver
         end
         File.chmod(0700, "#{$FS_SEARCH}/run.sh")
         exec_cmd "#{$FS_SEARCH}/run.sh | tee #{$FS_PHASE3}"
+
+        # clean up final configuration folder
+        fdir = "#{$FS_SEARCH}/final"
+        if File.exists?(fdir) then
+
+            # delete anything that's not a Rose output file
+            # (and save those in a lookup table for later)
+            rose_files = {}
+            Dir.foreach(fdir) do |fn|
+                if fn =~ /^rose_(.*)$/ then
+                    rose_files[fn] = $1
+                elsif not (fn == "." or fn == "..")
+                    FileUtils.rm_rf("#{fdir}/#{fn}")
+                end
+            end
+
+            # re-acquire the project
+            Dir.chdir(fdir)
+            exec_cmd $FS_ACQUIRE
+
+            # replace the old source files with the new ones
+            rose_files.each do |src,dest|
+                FileUtils.mv("#{fdir}/#{src}", "#{fdir}/#{dest}")
+            end
+        end
+
+        # print final output
         puts "Search results are located in #{$FS_SEARCH}"
         puts "If found, the recommended configuration is located in #{$FS_SEARCH}/final"
         puts ""
-        puts "== FloatSmith complete =="
     end
     # }}}
 
+    puts "== FloatSmith complete =="
 end
 
 run_driver
