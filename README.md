@@ -75,6 +75,8 @@ If you would prefer a more non-interactive experience, you can invoke FloatSmith
 in batch mode using the `-B` option. This will accept all default options unless
 otherwise specified on the command line. Run with `-h` for a complete list of
 options available to customize the run without using the interactive prompts.
+Note that you must at minimum specify the `--run` option. See the `run.sh`
+scripts in the demo folders for examples of how to use this mode.
 
 
 ### Using Docker
