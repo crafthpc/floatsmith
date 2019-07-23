@@ -68,10 +68,24 @@ you will find your final recommended configuration in the `.floatsmith/final`
 subfolder. You may examine `.floatsmith/search/craft_final.json` for a list of
 converted variables.
 
+
+### Batch mode
+
 If you would prefer a more non-interactive experience, you can invoke FloatSmith
 in batch mode using the `-B` option. This will accept all default options unless
 otherwise specified on the command line. Run with `-h` for a complete list of
 options available to customize the run without using the interactive prompts.
+
+
+### Using Docker
+
+If you have Docker installed, you can run FloatSmith on Ubuntu through a
+container. Run `floatsmith-docker` to launch the container. That script will
+build the image first if necessary; be aware that it may take quite a while and
+the resulting image is quite large (~10GB). It will automatically mount your
+current working folder into the container and any file system changes will take
+place as the user who builds the image. If you'd like to run the provided demos,
+they are also mounted in `/opt/floatsmith/demos`.
 
 
 ## Getting Involved

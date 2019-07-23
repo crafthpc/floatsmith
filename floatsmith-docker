@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+# check for Docker image
+if [ -z "$(docker image ls -q floatsmith)" ]; then
+    echo "Docker image 'floatsmith' isn't present. Attempting to build it now ... (may take some time)"
+
+    # save current path
+    CURPATH=$(pwd)
+
+    # get the path of this script, regardless of any symlinks (works on Linux and BSD)
+    #   (from https://stackoverflow.com/a/246128)
+    SOURCE="${BASH_SOURCE[0]}"
+    while [ -h "$SOURCE" ]; do
+    DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+    done
+    DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+    cd $DIR/docker
+
+    # build Docker image
+    ./build.sh
+
+    # check to make sure build worked
+    if [ -z "$(docker image ls -q floatsmith)" ]; then
+        echo "Unable to find 'floatsmith' image. Aborting."
+        exit 1
+    fi
+
+    # back to original location
+    cd $CURPATH
+fi
+
+# launch container
+docker run -v $(pwd):/local -it floatsmith
