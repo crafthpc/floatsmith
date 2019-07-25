@@ -150,6 +150,7 @@ def run_driver
         puts "        ddebug                    binary search on the list of variables"
         puts "        combinational             try all combinations (very expensive!)"
         puts " -t <number>                      run the specified number of trials per configuration during the CRAFT search [default=5]"
+        puts " -T <number>                      timeout trials after <n> seconds [default=1.5x baseline runtime]"
         puts " -J slurm                         submit configuration runs as SLURM jobs [default=false]"
         puts " -j <number>                      run the specified max number of simultaneous configurations during the CRAFT search [default=num cpus]"
         puts "                                  (-j is generally not used with \"-J slurm\" because SLURM manages the queue)"
@@ -614,6 +615,9 @@ def run_driver
         else
             ntrials = input_integer("How many trials of each configuration do you want to run?", "5")
             cmd += " -t #{ntrials}" if ntrials.to_i > 1
+        end
+        if ARGV.include?("-T") then
+            cmd += " -T #{ARGV[ARGV.find_index("-T")+1]}"
         end
         if ARGV.include?("-J") then
             cmd += " -J #{ARGV[ARGV.find_index("-J")+1]}"
