@@ -5,10 +5,9 @@
 
 require 'json'
 
+label_types  = {}   # label prefix => number of unique labels with that prefix
 label_counts = {}   # label count => number of actions with that many labels
 label_vars   = {}   # label name => list of variables with that label
-label_groups = {}   # label name => group id
-groups       = {}   # group id => list of variables in that group
 
 next_gid = 1
 
@@ -21,36 +20,37 @@ ARGV.each do |fn|
         labels = a["labels"]
         label_counts[labels.size] = 0 unless label_counts.has_key?(labels.size)
         label_counts[labels.size] += 1
-        gid = nil
         labels.each do |lbl|
+            type = lbl[/^[^=]*/]
+            label_types[type] = [] unless label_types.has_key?(type)
+            label_types[type] << lbl unless label_types[type].include?(lbl)
             label_vars[lbl] = [] unless label_vars.has_key?(lbl)
             if a.has_key?("name") then
                 label_vars[lbl] << a["name"]
             else
                 label_vars[lbl] << a["handle"]
             end
-            gid = label_groups[lbl] if label_groups.has_key?(lbl)
-        end
-        if gid.nil? then
-            gid = next_gid
-            next_gid += 1
-            groups[gid] = []
-        end
-        labels.each do |lbl|
-            label_groups[lbl] = gid
-        end
-        if a.has_key?("name") then
-            groups[gid] << a["name"]
-        else
-            groups[gid] << a["handle"]
         end
     end
 end
 
+puts
+puts "Label types:"
+label_types.each  { |k,v| puts "  #{k}: #{v.size} labels" }
+puts
 puts "Label counts:"
-label_counts.each { |k,v| puts "#{k} labels: #{v} actions" }
-puts "Labels:"
-label_vars.each   { |k,v| puts "#{v.size} #{k}: #{v.to_s}" }
-puts "Groups (size > 1):"
-groups.each       { |k,v| puts "Group #{k}: #{v.to_s}" unless v.size < 2 }
+label_counts.keys.sort.each { |k| puts "  #{k} labels: #{label_counts[k]} actions" }
+label_types.keys.each do |lbl|
+    label_counts = {}
+    puts
+    puts "Labels (#{lbl}):"
+    label_vars.each do |k,v|
+        label_counts[v.size] = 0 unless label_counts.has_key?(v.size)
+        label_counts[v.size] += 1
+        puts "  #{k}: #{v.size} actions" if k.start_with?(lbl)
+    end
+    puts "Counts:"
+    label_counts.keys.sort.each { |k| puts "  #{k} actions: #{label_counts[k]} labels" }
+end
+puts
 
