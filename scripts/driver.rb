@@ -155,7 +155,7 @@ def run_driver
         puts "        combinational             try all combinations (very expensive!)"
         puts "        simple                    hierarchical readth-first search on program structure to find passing configurations"
         puts "        comp_simple               hierarchical + compositional"
-        puts " -t <number>                      run the specified number of trials per configuration during the CRAFT search [default=5]"
+        puts " -t <number>                      run the specified number of trials per configuration during the CRAFT search [default=10]"
         puts " -T <number>                      timeout trials after <n> seconds [default=1.5x baseline runtime]"
         puts " -J slurm                         submit configuration runs as SLURM jobs [default=false]"
         puts " -j <number>                      run the specified max number of simultaneous configurations during the CRAFT search [default=num cpus]"
@@ -625,7 +625,7 @@ def run_driver
         if ARGV.include?("-t") then
             cmd += " -t #{ARGV[ARGV.find_index("-t")+1]}"
         else
-            ntrials = input_integer("How many trials of each configuration do you want to run?", "5")
+            ntrials = input_integer("How many trials of each configuration do you want to run?", "10")
             cmd += " -t #{ntrials}" if ntrials.to_i > 1
         end
         if ARGV.include?("-T") then
