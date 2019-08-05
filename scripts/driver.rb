@@ -139,21 +139,29 @@ def run_driver
         puts "FloatSmith batch mode ('-B') uses all default options unless overridden"
         puts "using any of the following flags:"
         puts ""
+        puts "FloatSmith options:"
+        puts "  --root \"name\"                   use \"name\" as the temporary file folder"
         puts "  --run \"cmd\"                     use \"cmd\" to run the program"
         puts "  --verify-regex \"regex\"          check for \"regex\" in output as verification"
         puts "  --verify-script \"script\"        run given script for verification"
         puts "  --ignore \"var1 var2 etc\"        ignore all variables with the provided names"
         puts "  --adapt                         run the ADAPT phase (off by default)"
+        puts ""
+        puts "CRAFT options:"
         puts "  -s <name>                       run the specified CRAFT search strategy"
         puts "      Valid strategy names:"
         puts "        compositional             try individuals then try to compose passing configurations"
         puts "        ddebug                    binary search on the list of variables"
         puts "        combinational             try all combinations (very expensive!)"
+        puts "        simple                    hierarchical readth-first search on program structure to find passing configurations"
+        puts "        comp_simple               hierarchical + compositional"
         puts " -t <number>                      run the specified number of trials per configuration during the CRAFT search [default=5]"
         puts " -T <number>                      timeout trials after <n> seconds [default=1.5x baseline runtime]"
         puts " -J slurm                         submit configuration runs as SLURM jobs [default=false]"
         puts " -j <number>                      run the specified max number of simultaneous configurations during the CRAFT search [default=num cpus]"
         puts "                                  (-j is generally not used with \"-J slurm\" because SLURM manages the queue)"
+        puts " -g <tag>                         group variables by labels beginning with the given tag"
+        puts " -M                               merge overlapping groups (no effect without \"-g\""
         puts ""
         exit
     end # }}}
@@ -177,8 +185,12 @@ def run_driver
     end # }}}
 
     # {{{ initialize paths
-    $FS_ROOT    = File.absolute_path(input_path("Where do you want to " +
-                      "save configuration and search files?", "./.floatsmith", false))
+    if ARGV.include?("--root") then
+        $FS_ROOT = File.absolute_path(ARGV[ARGV.find_index("--root")+1])
+    else
+        $FS_ROOT  = File.absolute_path(input_path("Where do you want to " +
+                        "save configuration and search files?", "./.floatsmith", false))
+    end
     $FS_SANITY  = "#{$FS_ROOT}/sanity"
     $FS_BASE    = "#{$FS_ROOT}/baseline"
     $FS_INITIAL = "#{$FS_ROOT}/initial"
@@ -640,8 +652,15 @@ def run_driver
             puts "TypeForge reports 'sets' of variables that should only be converted together, and"
             puts "CRAFT can automatically use this information to test fewer configurations if possible."
         end
-        group_sets = input_boolean("Do you wish to use set analysis to test fewer configurations?", true)
-        cmd += " -g set-analysis" if group_sets
+        if ARGV.include?("-g") then
+            cmd += " -g #{ARGV[ARGV.find_index("-g")+1]}"
+            if ARGV.include?("-M") then
+                cmd += " -M"
+            end
+        else
+            use_clustering = input_boolean("Do you wish to use typechain clustering to test fewer configurations?", false)
+            cmd += " -g typechain:cluster" if use_clustering
+        end
 
         # create phase reproducibility script and run it
         File.open("#{$FS_SEARCH}/run.sh", "w") do |f|
