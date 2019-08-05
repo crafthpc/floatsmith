@@ -232,7 +232,7 @@ def run_driver
             cmd = "git clone #{STDIN.gets.chomp} ."
         end
         File.open($FS_ACQUIRE, 'w') do |f|
-            f.puts "#/usr/bin/env bash"
+            f.puts "#!/usr/bin/env bash"
             f.puts cmd
         end
         File.chmod(0700, $FS_ACQUIRE)
@@ -269,7 +269,7 @@ def run_driver
             end
         end
         File.open($FS_BUILD, 'w') do |f|
-            f.puts "#/usr/bin/env bash"
+            f.puts "#!/usr/bin/env bash"
             script.each { |line| f.puts line }
         end
         File.chmod(0700, $FS_BUILD)
@@ -293,7 +293,7 @@ def run_driver
             end
         end
         File.open($FS_RUN, 'w') do |f|
-            f.puts "#/usr/bin/env bash"
+            f.puts "#!/usr/bin/env bash"
             f.puts "rm -f stdout"
             script.each { |line| f.puts line+" | tee -a stdout" }
         end
@@ -312,14 +312,15 @@ def run_driver
             puts "  d) Ensure all floats in output are within an Epsilon (stdout)"
             puts "  e) Custom script"
         end
-        script = []
+        script = nil
         regex = nil
         if ARGV.include?("--verify-regex") then
             opt = "b"
             regex = ARGV[ARGV.find_index("--verify-regex")+1]
         elsif ARGV.include?("--verify-script") then
             opt = "e"
-            script = IO.readlines(ARGV[ARGV.find_index("--verify-script")+1])
+            fn = ARGV[ARGV.find_index("--verify-script")+1].gsub(/\A"|"\Z/, '')
+            script = IO.readlines(fn)
         else
             opt = input_option("Choose an option above: ", "abcde", "a")
         end
@@ -383,7 +384,7 @@ def run_driver
             end
         end
         File.open($FS_VERIFY, 'w') do |f|
-            f.puts "#/usr/bin/env bash"
+            f.puts "#!/usr/bin/env bash"
             script.each { |line| f.puts line }
         end
         File.chmod(0700, $FS_VERIFY)
@@ -430,8 +431,8 @@ def run_driver
         # create phase reproducibility script and run it
         File.open("#{$FS_INITIAL}/run.sh", "w") do |f|
           script << "      \"name\": \"#{$FS_TFVARS}\","
-            f.puts "export CC='typeforge --plugin initial.json --set-analysis --typeforge-out #{$FS_TFVARS} --compile'"
-            f.puts "export CXX='typeforge --plugin initial.json --set-analysis --typeforge-out #{$FS_TFVARS} --compile'"
+            f.puts "export CC='typeforge --plugin initial.json --typeforge-out #{$FS_TFVARS} --compile'"
+            f.puts "export CXX='typeforge --plugin initial.json --typeforge-out #{$FS_TFVARS} --compile'"
             f.puts "#{$FS_BUILD}"
         end
         File.chmod(0700, "#{$FS_INITIAL}/run.sh")
