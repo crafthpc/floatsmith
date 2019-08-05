@@ -26,7 +26,7 @@ ARGV.each do |fn|
             label_types[type] << lbl unless label_types[type].include?(lbl)
             label_vars[lbl] = [] unless label_vars.has_key?(lbl)
             if a.has_key?("name") then
-                label_vars[lbl] << a["name"]
+                label_vars[lbl] << a["name"][/[^:]*$/]
             else
                 label_vars[lbl] << a["handle"]
             end
@@ -47,7 +47,11 @@ label_types.keys.each do |lbl|
     label_vars.each do |k,v|
         label_counts[v.size] = 0 unless label_counts.has_key?(v.size)
         label_counts[v.size] += 1
-        puts "  #{k}: #{v.size} actions" if k.start_with?(lbl)
+        if k.start_with?(lbl) then
+            print "  #{k}: #{v.size} actions"
+            print " #{v.inspect}" if v.size < 10
+            puts
+        end
     end
     puts "Counts:"
     label_counts.keys.sort.each { |k| puts "  #{k} actions: #{label_counts[k]} labels" }
