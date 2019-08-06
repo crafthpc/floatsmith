@@ -312,7 +312,7 @@ def run_driver
             puts "  d) Ensure all floats in output are within an Epsilon (stdout)"
             puts "  e) Custom script"
         end
-        script = nil
+        script = []
         regex = nil
         if ARGV.include?("--verify-regex") then
             opt = "b"
@@ -372,7 +372,7 @@ def run_driver
             error_type = STDIN.gets.chomp
             script << "#{__dir__}/find_floats.rb -q -#{error_type} #{$FS_BASE}/stdout stdout #{epsilon}"
         when "e"
-            if script.nil? then
+            if script.size == 0 then
                 puts "Enter Bash code to verify your program output:"
                 puts "(standard output will be in a file called stdout; empty line to finish)"
                 script = []
