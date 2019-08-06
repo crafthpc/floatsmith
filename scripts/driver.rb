@@ -112,22 +112,21 @@ end
 def exec_cmd(cmd, echo_stdout=true, echo_stderr=false, return_stdout=false)
     # run a command and optionally echo or return output
     stdout = []
-    Open3.popen3(cmd) do |io_in, io_out, io_err|
+    io_in, io_out, io_err, wait_thr = Open3.popen3(cmd)
+    io_in.close
+    Thread.new do
+        io_err.each_line { |line| puts line if echo_stderr }
+        io_err.close
+    end
+    Thread.new do
         io_out.each_line do |line|
             puts line if echo_stdout
             stdout << line if return_stdout
         end
-        io_err.each_line { |line| puts line } if echo_stderr
+        io_out.close
     end
+    exit_status = wait_thr.value
     return stdout.join("\n")
-end
-
-def save_cmd(cmd, stdout_fn)
-    # run a command and save standard output to a file
-    Open3.popen3(cmd) do |io_in, io_out, io_err|
-        io_out.each_line { |line| puts line } if echo_stdout
-        io_err.each_line { |line| puts line } if echo_stderr
-    end
 end # }}}
 
 # run_driver - main driver routine
