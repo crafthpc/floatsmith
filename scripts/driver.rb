@@ -109,19 +109,23 @@ end
 # }}}
 
 # {{{ command execution routines
-def exec_cmd(cmd, echo_stdout=true, echo_stderr=false, return_stdout=false)
+def exec_cmd(cmd, echo_stdout=true, echo_stderr=false, return_stdout=false, log_file=nil)
     # run a command and optionally echo or return output
     stdout = []
     io_in, io_out, io_err, wait_thr = Open3.popen3(cmd)
     io_in.close
     Thread.new do
-        io_err.each_line { |line| puts line if echo_stderr }
+        io_err.each_line do |line|
+            puts line if echo_stderr
+            File.open(log_file, "a") { |f| f.puts line } if not log_file.nil?
+        end
         io_err.close
     end
     Thread.new do
         io_out.each_line do |line|
             puts line if echo_stdout
             stdout << line if return_stdout
+            File.open(log_file, "a") { |f| f.puts line } if not log_file.nil?
         end
         io_out.close
     end
@@ -435,7 +439,7 @@ def run_driver
             f.puts "#{$FS_BUILD}"
         end
         File.chmod(0700, "#{$FS_INITIAL}/run.sh")
-        exec_cmd "#{$FS_INITIAL}/run.sh | tee #{$FS_PHASE1}"
+        exec_cmd("#{$FS_INITIAL}/run.sh", true, true, false, $FS_PHASE1)
         puts "Variables discovered: #{$FS_TFVARS}"
         puts ""
     end
@@ -555,7 +559,7 @@ def run_driver
                 f.puts "cp adapt_recommend.json #{$FS_ADOUT}"
             end
             File.chmod(0700, "#{$FS_ADRUN}/run.sh")
-            exec_cmd "#{$FS_ADRUN}/run.sh | tee #{$FS_PHASE2}"
+            exec_cmd("#{$FS_ADRUN}/run.sh", true, true, false, $FS_PHASE2)
 
             # see if ADAPT generated the expected output file
             if File.exist?($FS_ADOUT) then
@@ -668,7 +672,7 @@ def run_driver
             f.puts cmd
         end
         File.chmod(0700, "#{$FS_SEARCH}/run.sh")
-        exec_cmd "#{$FS_SEARCH}/run.sh | tee #{$FS_PHASE3}"
+        exec_cmd("#{$FS_SEARCH}/run.sh", true, true, false, $FS_PHASE3)
 
         # clean up final configuration folder
         fdir = "#{$FS_SEARCH}/final"
