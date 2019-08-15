@@ -4,7 +4,7 @@
 mkdir -p $ROSE_HOME
 git clone -b release https://github.com/rose-compiler/rose.git $ROSE_HOME/src
 cd $ROSE_HOME/src
-git checkout develop        # TODO: switch to particular release
+git checkout v0.9.11.95
 
 # setup build folder and configure
 ./build
