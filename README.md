@@ -89,6 +89,21 @@ current working folder into the container and any file system changes will take
 place as the user who builds the image. If you'd like to run the provided demos,
 they are also mounted in `/opt/floatsmith/demos`.
 
+Alternatively, you can pull and run the latest image directly from Docker Hub:
+
+```
+docker pull lam2mo/floatsmith
+docker run -it lam2mo/floatsmith
+```
+
+The demos are provided in the image home folder in this version. Although your
+local filesystem can still be mounted into this version (command below), it is
+not built with your local user and therefore should be used with caution when
+modifying files on your system.
+
+```
+docker run -v $(pwd):/local -it lam2mo/floatsmith
+```
 
 ### FloatSmith File Structure
 
