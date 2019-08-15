@@ -27,7 +27,7 @@ for app in $APPS; do
                     rm -rf $tag
                     mkdir $tag
                     #echo "$invoke --root $tag $adapt -s $strat $grp"
-                    $invoke --root $tag $adapt -s $strat $grp -J slurm &>$tag/floatsmith.log
+                    $invoke --root $tag $adapt -s $strat $grp &>$tag/floatsmith.log
                 fi
 
                 if [ -e $tag ]; then
