@@ -4,7 +4,7 @@ ROOT=$(pwd)
 REGEN="no"
 
 APPS="sanity axpy sum2pi_x arclength"
-STRATEGIES="compositional simple_comp ddebug"
+STRATEGIES="combinational compositional ddebug simple_comp"
 GROUPINGS=("" "-g typechain:cluster")
 
 echo "AppName,BaselineTime,NumCandidates,ADAPT,ADAPTChanges,Strategy,Group,MergeGroups,Tested,Aborted,Failed,Passed,MaxReplaced,BestSpeedup" | tee $ROOT/experiment.out
@@ -21,7 +21,7 @@ for app in $APPS; do
     for adapt in "${ADAPT_FLAGS[@]}"; do
         for strat in $STRATEGIES; do
             for grp in "${GROUPINGS[@]}"; do
-                tag=$(echo ".fs-${strat}${grp}" | sed -e 's/[^A-Za-z0-9._-]/_/g')
+                tag=$(echo ".fs-${strat}${adapt}${grp}" | sed -e 's/[^A-Za-z0-9._-]/_/g')
 
                 if [ "$REGEN" = "yes" ] || [ ! -e $tag ]; then
                     rm -rf $tag
