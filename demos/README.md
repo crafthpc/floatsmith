@@ -66,3 +66,11 @@ stored in single precision.
 
 To run: `floatsmith -B --run "./arclength" --ignore "error" --adapt`
 
+## DFT
+
+This is an example from [this paper](https://doi.org/10.1109/FPT.2002.1188677).
+The program runs a discrete fourier transform. Several variables can be stored
+in single precision.
+
+To run: `floatsmith -B --run "./dft" --ignore "norm" --adapt`
+

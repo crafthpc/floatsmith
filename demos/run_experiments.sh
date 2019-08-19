@@ -3,9 +3,10 @@
 ROOT=$(pwd)
 REGEN="no"
 
-APPS="sanity axpy sum2pi_x arclength"
-STRATEGIES="combinational compositional ddebug simple_comp"
-GROUPINGS=("" "-g typechain:cluster")
+APPS="sanity axpy sum2pi_x arclength dft"
+STRATEGIES="combinational compositional ddebug comp_simple"
+#GROUPINGS=("" "-g typechain:cluster")
+GROUPINGS=("")
 
 echo "AppName,BaselineTime,NumCandidates,ADAPT,ADAPTChanges,Strategy,Group,MergeGroups,Tested,Aborted,Failed,Passed,MaxReplaced,BestSpeedup" | tee $ROOT/experiment.out
 
