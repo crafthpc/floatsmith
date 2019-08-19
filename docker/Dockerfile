@@ -19,7 +19,7 @@ ENV PATH            $FLOATSMITH_HOME/tools/craft/scripts:$PATH
 # update system software and install dependencies + Rose build script
 RUN apt-get update -y
 RUN apt-get install -y git wget make automake libtool gcc g++ gdb \
-                       libboost-all-dev flex bison ghostscript ruby bc
+                       libboost-all-dev flex bison ghostscript ruby bc vim
 COPY build_rose.sh /opt/build_rose.sh
 RUN chmod +x /opt/build_rose.sh
 
