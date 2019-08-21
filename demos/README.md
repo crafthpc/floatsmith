@@ -61,7 +61,7 @@ should not be converted.
 
 This is an example from
 [Precimonious](https://github.com/corvette-berkeley/precimonious). The program
-approximates an integral using Simpson's rule. One of the variables can be
+approximates an integral over an irregular function. One of the variables can be
 stored in single precision.
 
 To run: `floatsmith -B --run "./arclength" --ignore "error" --adapt`
