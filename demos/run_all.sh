@@ -1,7 +1,7 @@
 #/usr/bin/env bash
 #
 
-TESTS="sanity axpy sum2pi_x arclength"
+TESTS="sanity axpy sum2pi_x simpsons arclength"
 LOGFILE="floatsmith.log"
 
 echo "" >$LOGFILE

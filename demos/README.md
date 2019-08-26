@@ -57,9 +57,19 @@ To run: `floatsmith -B --run "./sum2pi_x" --ignore "answer diff error" --adapt`
 The invocation ignores several variables that are used to verify the results and
 should not be converted.
 
-## Arclength
+## Simpson's
 
 This is an example from
+[Precimonious](https://github.com/corvette-berkeley/precimonious). The program
+evaluates the integral of a function using Simpson’s rule for numerical
+quadrature.  Higher precision must be used for the `s1` and `x` variables as
+compared to the others.
+
+To run: `floatsmith -B --run "./simpsons" --adapt`
+
+## Arclength
+
+This is another example from
 [Precimonious](https://github.com/corvette-berkeley/precimonious). The program
 approximates an integral over an irregular function. One of the variables can be
 stored in single precision.
