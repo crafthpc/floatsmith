@@ -47,8 +47,10 @@ USER user
 RUN /opt/build_rose.sh
 
 # install FloatSmith and dependencies
-RUN git clone https://github.com/crafthpc/floatsmith.git /opt/floatsmith
-RUN /opt/floatsmith/floatsmith -h
+RUN git clone https://github.com/crafthpc/floatsmith.git $FLOATSMITH_HOME
+RUN git clone https://github.com/LLNL/adapt-fp.git       $ADAPT_HOME
+RUN git clone https://github.com/SciCompKL/CoDiPack.git  $CODIPACK_HOME
+RUN git clone https://github.com/crafthpc/craft.git      $FLOATSMITH_HOME/tools/craft
 
 # if local user/group ID is present, use the mount point /local as the user's
 # home, otherwise use the demos folder
