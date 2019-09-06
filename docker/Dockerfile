@@ -12,6 +12,8 @@ ENV LD_LIBRARY_PATH $ROSE_HOME/install/bin:$LD_LIBRARY_PATH
 
 # set up paths for FloatSmith/CRAFT
 ENV FLOATSMITH_HOME /opt/floatsmith
+ENV CODIPACK_HOME   /opt/floatsmith/tools/CoDiPack
+ENV ADAPT_HOME      /opt/floatsmith/tools/adapt-fp
 ENV PATH            $FLOATSMITH_HOME:$PATH
 ENV PATH            $FLOATSMITH_HOME/scripts:$PATH
 ENV PATH            $FLOATSMITH_HOME/tools/craft/scripts:$PATH
