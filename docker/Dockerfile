@@ -3,7 +3,7 @@ LABEL name="FloatSmith"
 LABEL maintainer="Mike Lam <lam2mo@jmu.edu>"
 LABEL description="FloatSmith container"
 LABEL architecture="x86_64"
-LABEL version="1.1"
+LABEL version="1.2"
 
 # set up paths for Rose/TypeForge
 ENV ROSE_HOME       /opt/rose
