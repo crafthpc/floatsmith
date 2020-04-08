@@ -463,7 +463,8 @@ def run_driver
         if ARGV.include?("--ignore") then
             names = ARGV[ARGV.find_index("--ignore")+1].split(" ")
             cfg["actions"].each_index do |i|
-                ids << i if names.include?(cfg["actions"][i]["name"])
+                # check only last element of fully-qualified name (e.g., "sum" instead of "::main::sum")
+                ids << i if names.include?(cfg["actions"][i]["name"].split("::")[-1])
             end
         else
             if input_boolean("Do you wish to review/edit the list of variables?", false) then
