@@ -165,6 +165,7 @@ def run_driver
         puts "                                  (-j is generally not used with \"-J slurm\" because SLURM manages the queue)"
         puts " -g <tag>                         group variables by labels beginning with the given tag"
         puts " -M                               merge overlapping groups (no effect without \"-g\""
+        puts " -C \"<options>\"                   pass through some other option(s)"
         puts ""
         exit
     end # }}}
@@ -665,6 +666,9 @@ def run_driver
         else
             use_clustering = input_boolean("Do you wish to use typechain clustering to test fewer configurations?", false)
             cmd += " -g typechain:cluster" if use_clustering
+        end
+        if ARGV.include?("-C") then
+            cmd += " #{ARGV[ARGV.find_index("-C")+1]}"
         end
 
         # create phase reproducibility script and run it
