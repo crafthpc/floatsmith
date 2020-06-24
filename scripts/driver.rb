@@ -591,7 +591,7 @@ def run_driver
             f.puts "export CC=\"typeforge --plugin $1 --compile\""
             f.puts "export CXX=\"typeforge --plugin $1 --compile\""
             f.puts IO.read($FS_BUILD)
-            f.puts "typeforge --cast-stats rose_*"
+            f.puts "typeforge --cast-stats rose_* || true"
         end
         File.chmod(0700, "#{$FS_SEARCH}/craft_builder")
         File.open("#{$FS_SEARCH}/craft_driver", "w") do |f|
