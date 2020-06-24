@@ -164,7 +164,7 @@ def run_driver
         puts " -j <number>                      run the specified max number of simultaneous configurations during the CRAFT search [default=num cpus]"
         puts "                                  (-j is generally not used with \"-J slurm\" because SLURM manages the queue)"
         puts " -g <tag>                         group variables by labels beginning with the given tag"
-        puts " -M                               merge overlapping groups (no effect without \"-g\""
+        puts " -M                               merge overlapping groups (no effect without \"-g\")"
         puts " -C \"<options>\"                   pass through some other option(s)"
         puts ""
         exit
