@@ -11,7 +11,7 @@ floating-point code for mixed precision using three existing tools: 1)
 
 The CRAFT search depends on [Ruby](https://www.ruby-lang.org/en/) 2.0 or later,
 ADAPT depends on [CoDiPack](https://github.com/SciCompKL/CoDiPack), and
-TypeForge depends on the [Rose](https://github.com/rose-compiler/rose-develop/)
+TypeForge depends on the [Rose](http://rosecompiler.org)
 compiler framework. CoDiPack and Rose are installed automatically if you do not
 already have ADAPT and TypeForge installed. See the sections below for more
 details.
